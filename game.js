@@ -1406,7 +1406,8 @@ class Gem {
             ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
             ctx.beginPath();
             ctx.ellipse(-this.size * 0.3, -this.size * 0.3, this.size * 0.4, this.size * 0.3, -Math.PI/4, 0, Math.PI * 2);
-        ctx.fill();
+            ctx.fill();
+        }
         
         ctx.restore();
     }
@@ -1890,7 +1891,10 @@ function update() {
     // Actualizar gemas
     gameState.gems = gameState.gems.filter(gem => gem.update());
     
-    // Actualizar partículas
+    // Actualizar partículas (limitar a 200 para rendimiento)
+    if (gameState.particles.length > 200) {
+        gameState.particles = gameState.particles.slice(-150);
+    }
     gameState.particles = gameState.particles.filter(particle => particle.update());
     
     // Actualizar efectos especiales
