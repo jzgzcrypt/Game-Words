@@ -627,11 +627,17 @@ class Enemy {
         this.attackRange = 50;
         this.attackSpeed = 2500 - level * 50; // Más lento
         this.lastAttack = 0;
+        this.lastHit = 0; // Para efecto de daño
         
         // Tipo de criatura basado en nivel
         this.type = this.getCreatureType(level);
         this.angle = Math.random() * Math.PI * 2;
         this.animationPhase = Math.random() * Math.PI * 2;
+        
+        // Determinar si es nave o criatura y guardar el sprite
+        if (window.EnemySprites) {
+            this.spriteData = window.EnemySprites.getEnemySprite(level);
+        }
     }
     
     getCreatureType(level) {
@@ -672,6 +678,7 @@ class Enemy {
     
     takeDamage(amount) {
         this.health -= amount;
+        this.lastHit = Date.now(); // Marcar el momento del daño
         
         if (this.health <= 0) {
             // Dar experiencia

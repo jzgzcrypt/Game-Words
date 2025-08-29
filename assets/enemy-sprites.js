@@ -1,6 +1,6 @@
 // Sistema de Sprites Ultra-Realistas para Enemigos
 const EnemySprites = {
-    // Configuración de enemigos con diseños de naves submarinas
+    // Configuración mixta de criaturas marinas y naves submarinas
     enemies: {
         // Nivel 1-3: Drones de Exploración
         scout: {
@@ -527,18 +527,301 @@ const EnemySprites = {
         }
     },
     
-    // Método para obtener el sprite correcto según el nivel
-    getEnemySprite: function(level) {
-        if (level <= 3) return this.enemies.scout;
-        if (level <= 6) return this.enemies.fighter;
-        if (level <= 9) return this.enemies.cruiser;
-        if (level <= 12) return this.enemies.battleship;
-        return this.enemies.destroyer;
+    // Criaturas marinas naturales
+    creatures: {
+        fish: {
+            name: 'Pez Tropical',
+            draw: function(ctx, enemy) {
+                const size = enemy.size;
+                ctx.save();
+                
+                // Cuerpo del pez
+                const gradient = ctx.createLinearGradient(-size, 0, size, 0);
+                gradient.addColorStop(0, '#FF6B6B');
+                gradient.addColorStop(0.5, '#FF8E53');
+                gradient.addColorStop(1, '#FF6B6B');
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, size * 1.2, size * 0.6, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Aletas
+                ctx.fillStyle = 'rgba(255, 107, 107, 0.7)';
+                ctx.beginPath();
+                ctx.moveTo(-size * 0.5, 0);
+                ctx.lineTo(-size * 0.8, -size * 0.4);
+                ctx.lineTo(-size * 0.3, -size * 0.2);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.moveTo(-size * 0.5, 0);
+                ctx.lineTo(-size * 0.8, size * 0.4);
+                ctx.lineTo(-size * 0.3, size * 0.2);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Cola
+                ctx.beginPath();
+                ctx.moveTo(-size, 0);
+                ctx.lineTo(-size * 1.5, -size * 0.5);
+                ctx.lineTo(-size * 1.5, size * 0.5);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Ojo
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(size * 0.5, -size * 0.1, size * 0.15, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = 'black';
+                ctx.beginPath();
+                ctx.arc(size * 0.55, -size * 0.1, size * 0.08, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Escamas brillantes
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 1;
+                for (let i = -3; i < 3; i++) {
+                    ctx.beginPath();
+                    ctx.arc(i * size * 0.2, 0, size * 0.1, 0, Math.PI);
+                    ctx.stroke();
+                }
+                
+                ctx.restore();
+            }
+        },
+        
+        jellyfish: {
+            name: 'Medusa Bioluminiscente',
+            draw: function(ctx, enemy) {
+                const size = enemy.size;
+                const pulse = Math.sin(Date.now() * 0.003) * 0.1 + 1;
+                
+                ctx.save();
+                ctx.scale(pulse, pulse);
+                
+                // Glow bioluminiscente
+                ctx.shadowBlur = 30;
+                ctx.shadowColor = '#FF69B4';
+                
+                // Campana de la medusa
+                const gradient = ctx.createRadialGradient(0, -size * 0.3, 0, 0, 0, size);
+                gradient.addColorStop(0, 'rgba(255, 105, 180, 0.8)');
+                gradient.addColorStop(0.5, 'rgba(255, 20, 147, 0.6)');
+                gradient.addColorStop(1, 'rgba(139, 69, 139, 0.3)');
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, size, size * 0.8, 0, Math.PI, Math.PI * 2);
+                ctx.fill();
+                
+                // Tentáculos ondulantes
+                ctx.strokeStyle = 'rgba(255, 105, 180, 0.6)';
+                ctx.lineWidth = 2;
+                for (let i = -4; i <= 4; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(i * size * 0.2, size * 0.5);
+                    const wave = Math.sin(Date.now() * 0.005 + i) * 10;
+                    ctx.quadraticCurveTo(
+                        i * size * 0.2 + wave, 
+                        size, 
+                        i * size * 0.2 + wave * 0.5, 
+                        size * 1.5
+                    );
+                    ctx.stroke();
+                }
+                
+                // Puntos bioluminiscentes
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                for (let i = 0; i < 5; i++) {
+                    const angle = (i / 5) * Math.PI;
+                    const x = Math.cos(angle) * size * 0.7;
+                    const y = Math.sin(angle) * size * 0.3;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                ctx.restore();
+            }
+        },
+        
+        shark: {
+            name: 'Tiburón',
+            draw: function(ctx, enemy) {
+                const size = enemy.size;
+                ctx.save();
+                
+                // Cuerpo del tiburón
+                ctx.fillStyle = '#708090';
+                ctx.beginPath();
+                ctx.ellipse(0, 0, size * 1.5, size * 0.7, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Aleta dorsal
+                ctx.fillStyle = '#5F6A7A';
+                ctx.beginPath();
+                ctx.moveTo(0, -size * 0.7);
+                ctx.lineTo(size * 0.3, -size * 0.3);
+                ctx.lineTo(-size * 0.3, -size * 0.3);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Cola
+                ctx.beginPath();
+                ctx.moveTo(-size * 1.2, 0);
+                ctx.lineTo(-size * 1.8, -size * 0.6);
+                ctx.lineTo(-size * 1.5, 0);
+                ctx.lineTo(-size * 1.8, size * 0.6);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Boca con dientes
+                ctx.strokeStyle = '#2C3E50';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(size * 0.8, size * 0.1, size * 0.3, 0.2, Math.PI - 0.2);
+                ctx.stroke();
+                
+                // Dientes
+                ctx.fillStyle = 'white';
+                for (let i = 0; i < 5; i++) {
+                    const angle = 0.3 + i * 0.5;
+                    const x = size * 0.8 + Math.cos(angle) * size * 0.25;
+                    const y = size * 0.1 + Math.sin(angle) * size * 0.25;
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x - 2, y + 4);
+                    ctx.lineTo(x + 2, y + 4);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                
+                // Ojo
+                ctx.fillStyle = 'black';
+                ctx.beginPath();
+                ctx.arc(size * 0.6, -size * 0.2, 3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Branquias
+                ctx.strokeStyle = '#2C3E50';
+                ctx.lineWidth = 1;
+                for (let i = 0; i < 3; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(size * 0.2 - i * 5, -size * 0.2);
+                    ctx.lineTo(size * 0.2 - i * 5, size * 0.2);
+                    ctx.stroke();
+                }
+                
+                ctx.restore();
+            }
+        },
+        
+        octopus: {
+            name: 'Pulpo',
+            draw: function(ctx, enemy) {
+                const size = enemy.size;
+                ctx.save();
+                
+                // Cabeza del pulpo
+                const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, size);
+                gradient.addColorStop(0, '#9C27B0');
+                gradient.addColorStop(0.7, '#7B1FA2');
+                gradient.addColorStop(1, '#4A148C');
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, size, size * 1.2, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Tentáculos
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i / 8) * Math.PI * 2;
+                    const baseX = Math.cos(angle) * size * 0.7;
+                    const baseY = Math.sin(angle) * size * 0.7;
+                    
+                    ctx.strokeStyle = '#7B1FA2';
+                    ctx.lineWidth = size * 0.2;
+                    ctx.lineCap = 'round';
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(baseX, baseY);
+                    
+                    const wave1 = Math.sin(Date.now() * 0.003 + i) * 10;
+                    const wave2 = Math.cos(Date.now() * 0.004 + i) * 10;
+                    
+                    ctx.quadraticCurveTo(
+                        baseX * 1.5 + wave1,
+                        baseY * 1.5 + wave2,
+                        baseX * 2 + wave1 * 0.5,
+                        baseY * 2 + wave2 * 0.5
+                    );
+                    ctx.stroke();
+                    
+                    // Ventosas
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                    for (let j = 0; j < 3; j++) {
+                        const t = (j + 1) / 4;
+                        const x = baseX * (1 + t);
+                        const y = baseY * (1 + t);
+                        ctx.beginPath();
+                        ctx.arc(x, y, 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+                
+                // Ojos
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.ellipse(-size * 0.3, -size * 0.2, size * 0.2, size * 0.3, 0, 0, Math.PI * 2);
+                ctx.ellipse(size * 0.3, -size * 0.2, size * 0.2, size * 0.3, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = 'black';
+                ctx.beginPath();
+                ctx.arc(-size * 0.3, -size * 0.2, size * 0.1, 0, Math.PI * 2);
+                ctx.arc(size * 0.3, -size * 0.2, size * 0.1, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        }
+    },
+    
+    // Método para obtener el sprite correcto según el nivel y tipo
+    getEnemySprite: function(level, forceType = null) {
+        // Si se especifica un tipo, usarlo
+        if (forceType) {
+            if (this.creatures[forceType]) return this.creatures[forceType];
+        }
+        
+        // Sistema mixto: 50% criaturas naturales, 50% naves
+        const useNaturalCreature = Math.random() < 0.5;
+        
+        if (useNaturalCreature) {
+            // Seleccionar criatura según nivel
+            if (level <= 3) return Math.random() < 0.7 ? this.creatures.fish : this.creatures.jellyfish;
+            if (level <= 6) return Math.random() < 0.6 ? this.creatures.fish : this.creatures.shark;
+            if (level <= 9) return Math.random() < 0.5 ? this.creatures.shark : this.creatures.octopus;
+            if (level <= 12) return Math.random() < 0.5 ? this.creatures.octopus : this.creatures.jellyfish;
+            return this.creatures.octopus; // Niveles altos
+        } else {
+            // Seleccionar nave según nivel
+            if (level <= 3) return this.enemies.scout;
+            if (level <= 6) return this.enemies.fighter;
+            if (level <= 9) return this.enemies.cruiser;
+            if (level <= 12) return this.enemies.battleship;
+            return this.enemies.destroyer;
+        }
     },
     
     // Método principal de dibujo
     drawEnemy: function(ctx, enemy) {
-        const sprite = this.getEnemySprite(enemy.level);
+        // Usar el sprite guardado en el enemigo o generar uno nuevo
+        const sprite = enemy.spriteData || this.getEnemySprite(enemy.level);
         
         ctx.save();
         ctx.translate(enemy.x - gameState.camera.x, enemy.y - gameState.camera.y);
@@ -599,44 +882,47 @@ const EnemySprites = {
         ctx.fillRect(-barWidth/2 + 1, barY + 1, (barWidth - 2) * healthPercent, 2);
     },
     
-    // Indicador de nivel
+    // Indicador de nivel mejorado
     drawLevelIndicator: function(ctx, enemy) {
         ctx.save();
         
-        // Placa de nivel
-        const badgeSize = 12;
-        const badgeY = -enemy.size - 20;
+        // Posición junto al nombre, más sutil
+        const levelX = enemy.size + 15;
+        const levelY = -enemy.size - 15;
         
-        // Fondo de la placa
-        const badgeGradient = ctx.createRadialGradient(0, badgeY, 0, 0, badgeY, badgeSize);
-        badgeGradient.addColorStop(0, '#FFD700');
-        badgeGradient.addColorStop(0.7, '#FFA500');
-        badgeGradient.addColorStop(1, '#FF8C00');
-        
-        ctx.fillStyle = badgeGradient;
-        ctx.beginPath();
-        ctx.arc(0, badgeY, badgeSize, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Borde
-        ctx.strokeStyle = '#B8860B';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        
-        // Número de nivel
-        ctx.fillStyle = '#000000';
-        ctx.font = 'bold 10px Arial';
-        ctx.textAlign = 'center';
+        // Texto de nivel simple y elegante
+        ctx.font = 'bold 9px Arial';
+        ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(enemy.level, 0, badgeY);
         
-        // Estrellas para niveles altos
-        if (enemy.level >= 10) {
-            for (let i = 0; i < Math.min(3, Math.floor(enemy.level / 5)); i++) {
-                ctx.fillStyle = '#FFFF00';
-                ctx.font = '8px Arial';
-                ctx.fillText('★', (i - 1) * 10, badgeY + badgeSize + 5);
-            }
+        // Sombra para legibilidad
+        ctx.shadowBlur = 3;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+        
+        // Color según nivel
+        let levelColor = '#CCCCCC'; // Gris para niveles bajos
+        if (enemy.level >= 15) {
+            levelColor = '#FFD700'; // Dorado para niveles muy altos
+        } else if (enemy.level >= 10) {
+            levelColor = '#FF69B4'; // Rosa para niveles altos
+        } else if (enemy.level >= 5) {
+            levelColor = '#00CED1'; // Cyan para niveles medios
+        }
+        
+        ctx.fillStyle = levelColor;
+        ctx.fillText(`Lv.${enemy.level}`, levelX, levelY);
+        
+        // Indicador de dificultad con símbolos
+        if (enemy.level >= 20) {
+            ctx.fillStyle = '#FF0000';
+            ctx.font = '10px Arial';
+            ctx.fillText(' ☠', levelX + 25, levelY);
+        } else if (enemy.level >= 15) {
+            ctx.fillStyle = '#FFD700';
+            ctx.fillText(' ⚠', levelX + 25, levelY);
+        } else if (enemy.level >= 10) {
+            ctx.fillStyle = '#FFA500';
+            ctx.fillText(' !', levelX + 25, levelY);
         }
         
         ctx.restore();
