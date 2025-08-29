@@ -22,6 +22,16 @@ const realisticScript = document.createElement('script');
 realisticScript.src = 'assets/realistic-sprites.js';
 document.head.appendChild(realisticScript);
 
+// Incluir sistema de jefes
+const bossScript = document.createElement('script');
+bossScript.src = 'assets/boss-system.js';
+document.head.appendChild(bossScript);
+
+// Incluir sistema de mascotas
+const petScript = document.createElement('script');
+petScript.src = 'assets/pet-system.js';
+document.head.appendChild(petScript);
+
 // Variables del juego
 let gameState = {
     player: null,
@@ -31,12 +41,22 @@ let gameState = {
     particles: [],
     bubbles: [],
     merchantStations: [],
+    boss: null,
+    pets: [],
+    specialEffects: [],
     mouse: { x: canvas.width/2, y: canvas.height/2 },
     selectedTarget: null,
     gameRunning: true,
     camera: { x: 0, y: 0 },
     keys: {},
-    spritesLoaded: false
+    spritesLoaded: false,
+    realisticSpritesLoaded: false,
+    stats: {
+        enemiesDefeated: 0,
+        totalDamageDealt: 0,
+        totalDistanceTraveled: 0,
+        bossesDefeated: []
+    }
 };
 
 // Sistema de burbujas para el fondo
@@ -567,6 +587,9 @@ class Enemy {
             if (gameState.selectedTarget === this) {
                 gameState.selectedTarget = null;
             }
+            
+            // Actualizar estadísticas
+            gameState.stats.enemiesDefeated++;
             
             return false;
         }
@@ -1657,6 +1680,23 @@ function update() {
     // Actualizar jugador
     gameState.player.update();
     
+    // Verificar aparición de jefe
+    if (window.BossSystem && !window.BossSystem.currentBoss) {
+        if (window.BossSystem.checkBossSpawn(gameState.player, gameState.stats.enemiesDefeated)) {
+            gameState.boss = window.BossSystem.currentBoss;
+        }
+    }
+    
+    // Actualizar jefe si existe
+    if (window.BossSystem && window.BossSystem.currentBoss) {
+        window.BossSystem.updateBoss(gameState.player, gameState.projectiles, gameState.particles);
+    }
+    
+    // Actualizar mascotas
+    if (window.PetSystem && window.PetSystem.petInstances.length > 0) {
+        window.PetSystem.updatePets(gameState.player, gameState.enemies, gameState);
+    }
+    
     // Actualizar enemigos
     gameState.enemies.forEach(enemy => enemy.update());
     
@@ -1669,11 +1709,22 @@ function update() {
     // Actualizar partículas
     gameState.particles = gameState.particles.filter(particle => particle.update());
     
+    // Actualizar efectos especiales
+    gameState.specialEffects = gameState.specialEffects.filter(effect => {
+        if (effect.lifetime) {
+            effect.lifetime--;
+            return effect.lifetime > 0;
+        }
+        return true;
+    });
+    
     // Actualizar estaciones de comercio
     gameState.merchantStations.forEach(station => station.update());
     
-    // Generar más enemigos y estaciones
-    spawnEnemies();
+    // Generar más enemigos y estaciones (menos si hay jefe)
+    if (!window.BossSystem?.currentBoss) {
+        spawnEnemies();
+    }
     spawnMerchantStations();
 }
 
@@ -1691,11 +1742,26 @@ function render() {
     // Dibujar enemigos
     gameState.enemies.forEach(enemy => enemy.draw());
     
+    // Dibujar jefe si existe
+    if (window.BossSystem && window.BossSystem.currentBoss) {
+        window.BossSystem.drawBoss(ctx, gameState.camera);
+    }
+    
+    // Dibujar mascotas
+    if (window.PetSystem && window.PetSystem.petInstances.length > 0) {
+        window.PetSystem.drawPets(ctx, gameState.camera);
+    }
+    
     // Dibujar proyectiles
     gameState.projectiles.forEach(projectile => projectile.draw());
     
     // Dibujar partículas
     gameState.particles.forEach(particle => particle.draw());
+    
+    // Dibujar efectos especiales
+    gameState.specialEffects.forEach(effect => {
+        if (effect.draw) effect.draw(ctx, gameState.camera);
+    });
     
     // Dibujar jugador con sistema de evolución visual
     if (window.ShipEvolution) {
@@ -1765,6 +1831,24 @@ function init() {
     if (window.MerchantSystem) {
         window.MerchantSystem.init();
         console.log('Sistema del mercader inicializado');
+    }
+    
+    // Inicializar sistema de jefes
+    if (window.BossSystem) {
+        console.log('Sistema de jefes inicializado');
+        // El primer jefe aparecerá cuando se cumplan las condiciones
+    }
+    
+    // Inicializar sistema de mascotas
+    if (window.PetSystem) {
+        window.PetSystem.init();
+        // Dar delfín inicial al jugador
+        setTimeout(() => {
+            if (window.PetSystem && gameState.player) {
+                window.PetSystem.activatePet('dolphin', gameState.player);
+                console.log('Mascota inicial (Delfín) activada');
+            }
+        }, 1000);
     }
     
     // Generar primera estación de comercio cerca del spawn
