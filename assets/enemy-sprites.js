@@ -832,8 +832,40 @@ const EnemySprites = {
             ctx.filter = 'brightness(2) contrast(1.2)';
         }
         
-        // Dibujar el sprite
-        sprite.draw(ctx, enemy);
+        // Si es una nave y hay submarinos profesionales disponibles, usarlos
+        if (window.ProfessionalSubmarines && !sprite.name?.includes('Pez') && !sprite.name?.includes('Medusa') && 
+            !sprite.name?.includes('Tiburón') && !sprite.name?.includes('Pulpo')) {
+            
+            // Cargar sprites profesionales si no están cargados
+            if (!this.professionalSprites) {
+                this.professionalSprites = window.ProfessionalSubmarines.loadSprites();
+                this.professionalImages = {};
+                
+                // Crear imágenes para cada sprite
+                for (let key in this.professionalSprites) {
+                    const img = new Image();
+                    img.src = this.professionalSprites[key];
+                    this.professionalImages[key] = img;
+                }
+            }
+            
+            // Seleccionar submarino según nivel
+            const subType = window.ProfessionalSubmarines.getSubmarineForLevel(enemy.level);
+            const img = this.professionalImages[subType];
+            
+            if (img && img.complete) {
+                // Dibujar submarino profesional
+                const scale = enemy.size / 25;
+                ctx.scale(scale, scale);
+                ctx.drawImage(img, -100, -50, 200, 100);
+            } else {
+                // Fallback al sprite original mientras carga
+                sprite.draw(ctx, enemy);
+            }
+        } else {
+            // Dibujar sprite normal (criatura marina o nave básica)
+            sprite.draw(ctx, enemy);
+        }
         
         // Barra de vida elegante
         this.drawHealthBar(ctx, enemy);

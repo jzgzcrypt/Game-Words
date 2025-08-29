@@ -42,6 +42,11 @@ const enemySpritesScript = document.createElement('script');
 enemySpritesScript.src = 'assets/enemy-sprites.js';
 document.head.appendChild(enemySpritesScript);
 
+// Incluir submarinos profesionales
+const proSubmarinesScript = document.createElement('script');
+proSubmarinesScript.src = 'assets/professional-submarines.js';
+document.head.appendChild(proSubmarinesScript);
+
 // Variables del juego
 let gameState = {
     player: null,
