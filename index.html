@@ -78,17 +78,52 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: linear-gradient(135deg, rgba(0, 50, 80, 0.98), rgba(0, 30, 60, 0.95));
-            border: 3px solid #00CED1;
-            border-radius: 15px;
-            padding: 25px;
+            background: 
+                radial-gradient(ellipse at top left, rgba(138, 43, 226, 0.3), transparent 50%),
+                radial-gradient(ellipse at top right, rgba(0, 191, 255, 0.3), transparent 50%),
+                radial-gradient(ellipse at bottom, rgba(255, 215, 0, 0.2), transparent 60%),
+                linear-gradient(180deg, #0a0e27 0%, #151b3d 50%, #1a1840 100%);
+            border: 2px solid transparent;
+            background-clip: padding-box;
+            border-radius: 25px;
+            padding: 0;
             color: #00FA9A;
             display: none;
             z-index: 300;
-            min-width: 500px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 0 50px rgba(0, 206, 209, 0.8);
+            min-width: 600px;
+            max-width: 90%;
+            max-height: 85vh;
+            overflow: hidden;
+            box-shadow: 
+                0 0 80px rgba(138, 43, 226, 0.4),
+                0 0 40px rgba(0, 191, 255, 0.3),
+                inset 0 0 60px rgba(255, 255, 255, 0.05),
+                0 20px 40px rgba(0, 0, 0, 0.8);
+            animation: merchantFloat 4s ease-in-out infinite;
+        }
+        
+        .merchant-panel::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #FF00FF, #00FFFF, #FFD700, #FF00FF);
+            border-radius: 25px;
+            z-index: -1;
+            animation: borderRotate 3s linear infinite;
+            opacity: 0.8;
+        }
+        
+        @keyframes merchantFloat {
+            0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+            50% { transform: translate(-50%, -50%) translateY(-10px); }
+        }
+        
+        @keyframes borderRotate {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
         }
         
         .merchant-header {
