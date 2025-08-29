@@ -37,6 +37,11 @@ const systemsScript = document.createElement('script');
 systemsScript.src = 'assets/game-systems.js';
 document.head.appendChild(systemsScript);
 
+// Incluir sprites realistas de enemigos
+const enemySpritesScript = document.createElement('script');
+enemySpritesScript.src = 'assets/enemy-sprites.js';
+document.head.appendChild(enemySpritesScript);
+
 // Variables del juego
 let gameState = {
     player: null,
@@ -721,6 +726,13 @@ class Enemy {
     }
     
     draw() {
+        // Usar el nuevo sistema de sprites ultra-realistas si está disponible
+        if (window.EnemySprites) {
+            window.EnemySprites.drawEnemy(ctx, this);
+            return;
+        }
+        
+        // Fallback al sistema anterior
         const screenX = this.x - gameState.camera.x;
         const screenY = this.y - gameState.camera.y;
         
