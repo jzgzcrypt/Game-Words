@@ -256,6 +256,35 @@
             0%, 100% { transform: scale(1); opacity: 0.8; }
             50% { transform: scale(1.5); opacity: 0.3; }
         }
+        
+        @keyframes slideDown {
+            from { transform: translate(-50%, -100px); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(0.9); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+        
+        @keyframes ultimateFlash {
+            0% { transform: translate(-50%, -50%) scale(0.8) rotate(-5deg); }
+            25% { transform: translate(-50%, -50%) scale(1.1) rotate(5deg); }
+            50% { transform: translate(-50%, -50%) scale(0.95) rotate(-3deg); }
+            75% { transform: translate(-50%, -50%) scale(1.05) rotate(3deg); }
+            100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -265,7 +294,12 @@
             <div>Nivel: <span id="playerLevel">1</span></div>
             <div>Vida: <span id="playerHealth">100</span>/<span id="playerMaxHealth">100</span></div>
             <div>Experiencia: <span id="playerExp">0</span>/<span id="playerExpNext">100</span></div>
-            <div>Perlas: <span id="playerGems">0</span></div>
+            <div>Perlas: <span id="playerGems">0</span> 🐚</div>
+            <div id="biomeInfo" style="margin-top: 5px; color: #00FA9A; font-size: 14px;"></div>
+            <div id="ultimateInfo" style="margin-top: 5px; color: #FFD700; font-size: 14px;"></div>
+            <div style="margin-top: 10px; font-size: 11px; opacity: 0.7;">
+                WASD: Mover | ESPACIO: Objetivo | R: Ultimate | 🐚 Busca mercaderes
+            </div>
         </div>
         
         <div id="upgradePanel" class="upgrade-panel">

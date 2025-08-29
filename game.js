@@ -32,6 +32,11 @@ const petScript = document.createElement('script');
 petScript.src = 'assets/pet-system.js';
 document.head.appendChild(petScript);
 
+// Incluir sistemas avanzados del juego
+const systemsScript = document.createElement('script');
+systemsScript.src = 'assets/game-systems.js';
+document.head.appendChild(systemsScript);
+
 // Variables del juego
 let gameState = {
     player: null,
@@ -291,11 +296,23 @@ class Player {
     }
     
     takeDamage(amount) {
+        // Verificar invulnerabilidad
+        if (this.invulnerable && Date.now() < this.invulnerableTime) {
+            return; // No recibir daño si es invulnerable
+        }
+        
         this.health -= amount;
         if (this.health <= 0) {
             this.health = 0;
-            gameState.gameRunning = false;
-            alert('¡Has sido derrotado! Recarga la página para intentar de nuevo.');
+            
+            // Usar sistema de respawn en lugar de game over
+            if (window.RespawnSystem) {
+                window.RespawnSystem.respawn(this);
+                gameState.gameRunning = true; // Mantener el juego activo
+            } else {
+                gameState.gameRunning = false;
+                alert('¡Has sido derrotado! Recarga la página para intentar de nuevo.');
+            }
         }
         this.updateUI();
     }
@@ -314,6 +331,19 @@ class Player {
     levelUp() {
         this.level++;
         this.expRequired = levelTable.getExpRequired(this.level);
+        this.maxHealth += 20;
+        this.health = this.maxHealth;
+        this.damage += 5;
+        
+        // Crear checkpoint cada 5 niveles
+        if (this.level % 5 === 0 && window.RespawnSystem) {
+            window.RespawnSystem.createCheckpoint(this);
+        }
+        
+        // Desbloquear ultimate en nivel 5
+        if (this.level === 5 && window.UltimateSystem && !window.UltimateSystem.selectedUltimate) {
+            this.showUltimateSelection();
+        }
         
         // Mostrar panel de mejoras
         document.getElementById('upgradePanel').style.display = 'block';
@@ -327,6 +357,74 @@ class Player {
         document.getElementById('playerExp').textContent = Math.floor(this.exp);
         document.getElementById('playerExpNext').textContent = this.expRequired;
         document.getElementById('playerGems').textContent = this.gems;
+    }
+    
+    showUltimateSelection() {
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        `;
+        
+        const content = document.createElement('div');
+        content.style.cssText = `
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 800px;
+            color: white;
+        `;
+        
+        content.innerHTML = `
+            <h2 style="text-align: center; color: #FFD700; margin-bottom: 20px;">
+                ¡ELIGE TU HABILIDAD ULTIMATE!
+            </h2>
+            <div id="ultimateButtons" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+            </div>
+        `;
+        
+        modal.appendChild(content);
+        document.body.appendChild(modal);
+        
+        // Agregar botones de ultimates
+        const buttonsContainer = document.getElementById('ultimateButtons');
+        if (window.UltimateSystem) {
+            window.UltimateSystem.availableUltimates.forEach(ult => {
+                const btn = document.createElement('button');
+                btn.style.cssText = `
+                    background: linear-gradient(135deg, #667eea, #764ba2);
+                    border: none;
+                    padding: 15px;
+                    border-radius: 10px;
+                    color: white;
+                    cursor: pointer;
+                    transition: transform 0.3s;
+                `;
+                btn.innerHTML = `
+                    <div style="font-size: 30px;">${ult.icon}</div>
+                    <div style="font-weight: bold; margin: 10px 0;">${ult.name}</div>
+                    <div style="font-size: 12px; opacity: 0.9;">${ult.description}</div>
+                    <div style="margin-top: 10px; font-size: 11px;">
+                        Cooldown: ${ult.cooldown/1000}s | Tecla: R
+                    </div>
+                `;
+                btn.onmouseover = () => btn.style.transform = 'scale(1.05)';
+                btn.onmouseout = () => btn.style.transform = 'scale(1)';
+                btn.onclick = () => {
+                    window.UltimateSystem.selectUltimate(ult.id);
+                    modal.remove();
+                };
+                buttonsContainer.appendChild(btn);
+            });
+        }
     }
     
     draw() {
@@ -571,11 +669,31 @@ class Enemy {
         this.health -= amount;
         
         if (this.health <= 0) {
-            // Dar experiencia y posible gema
+            // Dar experiencia
             gameState.player.gainExp(levelTable.getExpGiven(this.level, gameState.player.level));
             
-            if (Math.random() < 0.3 + this.level * 0.02) {
-                gameState.gems.push(new Gem(this.x, this.y, this.level));
+            // Nuevo sistema de drops mejorado
+            if (window.EconomyBalance) {
+                const drops = window.EconomyBalance.generateDrop(this, gameState.player);
+                drops.forEach(drop => {
+                    if (drop.type === 'gem' || drop.type === 'rareGem') {
+                        const gem = new Gem(this.x, this.y, this.level);
+                        gem.value = drop.value;
+                        gem.isRare = drop.type === 'rareGem';
+                        gameState.gems.push(gem);
+                    } else if (drop.type === 'chest') {
+                        // Crear cofre del tesoro
+                        const chest = new Gem(this.x, this.y, this.level);
+                        chest.value = drop.value;
+                        chest.isChest = true;
+                        gameState.gems.push(chest);
+                    }
+                });
+            } else {
+                // Sistema antiguo como fallback
+                if (Math.random() < 0.5) {
+                    gameState.gems.push(new Gem(this.x, this.y, this.level));
+                }
             }
             
             // Efecto de muerte (muchas burbujas)
@@ -1150,6 +1268,8 @@ class Gem {
         this.value = Math.floor(level * 2);
         this.bobOffset = Math.random() * Math.PI * 2;
         this.collected = false;
+        this.isRare = false;
+        this.isChest = false;
         this.shimmer = 0;
     }
     
@@ -1196,38 +1316,96 @@ class Gem {
         ctx.translate(screenX, screenY);
         ctx.rotate(this.angle);
         
-        // Resplandor
-        const glowSize = this.size * 2 + Math.sin(this.shimmer) * 3;
-        const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, glowSize);
-        glow.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
-        glow.addColorStop(0.5, 'rgba(255, 255, 255, 0.1)');
-        glow.addColorStop(1, 'rgba(255, 255, 255, 0)');
-        
-        ctx.fillStyle = glow;
-        ctx.beginPath();
-        ctx.arc(0, 0, glowSize, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Perla principal
-        const gradient = ctx.createRadialGradient(-this.size * 0.3, -this.size * 0.3, 0, 0, 0, this.size);
-        gradient.addColorStop(0, '#FFFFFF');
-        gradient.addColorStop(0.5, '#E9ECEF');
-        gradient.addColorStop(1, '#ADB5BD');
-        
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(0, 0, this.size, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Borde
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        
-        // Brillo
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-        ctx.beginPath();
-        ctx.ellipse(-this.size * 0.3, -this.size * 0.3, this.size * 0.4, this.size * 0.3, -Math.PI/4, 0, Math.PI * 2);
+        if (this.isChest) {
+            // Dibujar cofre del tesoro
+            const size = this.size * 2;
+            
+            // Resplandor dorado
+            ctx.shadowBlur = 30;
+            ctx.shadowColor = '#FFD700';
+            
+            // Cofre
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(-size, -size/2, size*2, size);
+            
+            // Detalles dorados
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(-size, -size/2, size*2, size);
+            
+            // Cerradura
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(0, 0, size/4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Texto de valor
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('+' + this.value, 0, -size - 5);
+            
+        } else if (this.isRare) {
+            // Perla rara - multicolor
+            const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size * 1.5);
+            gradient.addColorStop(0, 'rgba(255, 215, 0, 0.9)');
+            gradient.addColorStop(0.3, 'rgba(255, 105, 180, 0.8)');
+            gradient.addColorStop(0.6, 'rgba(138, 43, 226, 0.7)');
+            gradient.addColorStop(1, 'rgba(0, 255, 255, 0.5)');
+            
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = '#FFD700';
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(0, 0, this.size * 1.3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Partículas brillantes
+            ctx.shadowBlur = 0;
+            for (let i = 0; i < 4; i++) {
+                const angle = (i / 4) * Math.PI * 2 + this.angle * 2;
+                const dist = this.size * 1.5;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.beginPath();
+                ctx.arc(Math.cos(angle) * dist, Math.sin(angle) * dist, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        } else {
+            // Perla normal
+            // Resplandor
+            const glowSize = this.size * 2 + Math.sin(this.shimmer) * 3;
+            const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, glowSize);
+            glow.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
+            glow.addColorStop(0.5, 'rgba(255, 255, 255, 0.1)');
+            glow.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(0, 0, glowSize, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Perla principal
+            const gradient = ctx.createRadialGradient(-this.size * 0.3, -this.size * 0.3, 0, 0, 0, this.size);
+            gradient.addColorStop(0, '#FFFFFF');
+            gradient.addColorStop(0.5, '#E9ECEF');
+            gradient.addColorStop(1, '#ADB5BD');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Borde
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
+            // Brillo
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.beginPath();
+            ctx.ellipse(-this.size * 0.3, -this.size * 0.3, this.size * 0.4, this.size * 0.3, -Math.PI/4, 0, Math.PI * 2);
         ctx.fill();
         
         ctx.restore();
@@ -1598,6 +1776,12 @@ document.addEventListener('keydown', (e) => {
         gameState.player.selectTarget();
     }
     
+    // R para usar ultimate
+    if ((e.key === 'r' || e.key === 'R') && gameState.player && window.UltimateSystem) {
+        e.preventDefault();
+        window.UltimateSystem.useUltimate(gameState.player);
+    }
+    
     // ESC para cerrar el mercader
     if (e.key === 'Escape') {
         if (window.MerchantSystem && window.MerchantSystem.isOpen) {
@@ -1730,8 +1914,12 @@ function update() {
 
 // Función de renderizado
 function render() {
-    // Dibujar fondo oceánico
-    drawOceanBackground();
+    // Dibujar fondo oceánico con biomas
+    if (window.BiomeSystem) {
+        window.BiomeSystem.drawBiomeBackground(ctx, gameState.camera, gameState.player);
+    } else {
+        drawOceanBackground();
+    }
     
     // Dibujar estaciones de comercio (detrás de todo)
     gameState.merchantStations.forEach(station => station.draw());
@@ -1849,6 +2037,28 @@ function init() {
                 console.log('Mascota inicial (Delfín) activada');
             }
         }, 1000);
+    }
+    
+    // Inicializar sistemas avanzados
+    if (window.EconomyBalance) {
+        window.EconomyBalance.rebalancePrices();
+        console.log('Economía rebalanceada');
+    }
+    
+    if (window.UltimateSystem) {
+        window.UltimateSystem.loadSelection();
+        console.log('Sistema de ultimates inicializado');
+    }
+    
+    // Intentar cargar partida guardada
+    if (window.SaveSystem) {
+        const saveData = window.SaveSystem.loadGame();
+        if (saveData) {
+            window.SaveSystem.applySaveData(saveData, gameState);
+            console.log('Partida cargada');
+        }
+        // Iniciar auto-guardado
+        window.SaveSystem.startAutoSave(gameState);
     }
     
     // Generar primera estación de comercio cerca del spawn
