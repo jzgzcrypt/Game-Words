@@ -622,7 +622,10 @@ class Player {
 
 // Clase Enemigo (Criaturas Marinas)
 class Enemy {
+    static nextId = 1; // ID estático para asignar IDs únicos
+    
     constructor(x, y, level) {
+        this.id = Enemy.nextId++; // Asignar ID único
         this.x = x;
         this.y = y;
         this.level = level;
@@ -645,8 +648,9 @@ class Enemy {
         this.animationPhase = Math.random() * Math.PI * 2;
         
         // Determinar si es nave o criatura y guardar el sprite
+        // Usar el ID para determinar consistentemente el tipo
         if (window.EnemySprites) {
-            this.spriteData = window.EnemySprites.getEnemySprite(level);
+            this.spriteData = window.EnemySprites.getEnemySprite(level, this.id);
         }
     }
     

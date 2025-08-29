@@ -792,21 +792,22 @@ const EnemySprites = {
     },
     
     // Método para obtener el sprite correcto según el nivel y tipo
-    getEnemySprite: function(level, forceType = null) {
-        // Si se especifica un tipo, usarlo
-        if (forceType) {
-            if (this.creatures[forceType]) return this.creatures[forceType];
+    getEnemySprite: function(level, enemyId = null) {
+        // Si no hay ID, generar uno aleatorio para compatibilidad
+        if (enemyId === null) {
+            enemyId = Math.floor(Math.random() * 1000);
         }
         
-        // Sistema mixto: 50% criaturas naturales, 50% naves
-        const useNaturalCreature = Math.random() < 0.5;
+        // Usar el ID del enemigo para determinar consistentemente si es criatura o nave
+        // Esto garantiza que cada enemigo individual siempre sea del mismo tipo
+        const useNaturalCreature = (enemyId % 2) === 0; // IDs pares = criaturas, impares = naves
         
         if (useNaturalCreature) {
-            // Seleccionar criatura según nivel
-            if (level <= 3) return Math.random() < 0.7 ? this.creatures.fish : this.creatures.jellyfish;
-            if (level <= 6) return Math.random() < 0.6 ? this.creatures.fish : this.creatures.shark;
-            if (level <= 9) return Math.random() < 0.5 ? this.creatures.shark : this.creatures.octopus;
-            if (level <= 12) return Math.random() < 0.5 ? this.creatures.octopus : this.creatures.jellyfish;
+            // Seleccionar criatura según nivel (sin aleatoriedad adicional)
+            if (level <= 3) return this.creatures.fish;
+            if (level <= 6) return this.creatures.jellyfish;
+            if (level <= 9) return this.creatures.shark;
+            if (level <= 12) return this.creatures.octopus;
             return this.creatures.octopus; // Niveles altos
         } else {
             // Seleccionar nave según nivel
@@ -820,8 +821,8 @@ const EnemySprites = {
     
     // Método principal de dibujo
     drawEnemy: function(ctx, enemy) {
-        // Usar el sprite guardado en el enemigo o generar uno nuevo
-        const sprite = enemy.spriteData || this.getEnemySprite(enemy.level);
+        // Usar el sprite guardado en el enemigo o generar uno nuevo con su ID
+        const sprite = enemy.spriteData || this.getEnemySprite(enemy.level, enemy.id);
         
         ctx.save();
         ctx.translate(enemy.x - gameState.camera.x, enemy.y - gameState.camera.y);
@@ -832,38 +833,70 @@ const EnemySprites = {
             ctx.filter = 'brightness(2) contrast(1.2)';
         }
         
-        // Si es una nave y hay submarinos profesionales disponibles, usarlos
-        if (window.ProfessionalSubmarines && !sprite.name?.includes('Pez') && !sprite.name?.includes('Medusa') && 
-            !sprite.name?.includes('Tiburón') && !sprite.name?.includes('Pulpo')) {
+        // Determinar si este enemigo es una nave o una criatura basándose en su ID
+        const isShip = enemy.id ? (enemy.id % 2) === 1 : false; // IDs impares = naves
+        
+        // Si es una nave y hay submarinos profesionales o de Subnautica disponibles, usarlos
+        if (isShip && (window.ProfessionalSubmarines || window.SubnauticaVehicles)) {
             
-            // Cargar sprites profesionales si no están cargados
-            if (!this.professionalSprites) {
-                this.professionalSprites = window.ProfessionalSubmarines.loadSprites();
-                this.professionalImages = {};
-                
-                // Crear imágenes para cada sprite
-                for (let key in this.professionalSprites) {
-                    const img = new Image();
-                    img.src = this.professionalSprites[key];
-                    this.professionalImages[key] = img;
+            // Decidir si usar submarinos profesionales o vehículos de Subnautica basándose en el ID
+            // Usar el ID para hacer la decisión consistente para cada enemigo
+            const useSubnautica = window.SubnauticaVehicles && ((enemy.id % 10) < 3); // ~30% Subnautica, consistente por enemigo
+            
+            if (useSubnautica) {
+                // Usar vehículos de Subnautica
+                if (!this.subnauticaSprites) {
+                    this.subnauticaSprites = window.SubnauticaVehicles.loadSprites();
+                    this.subnauticaImages = {};
+                    
+                    for (let key in this.subnauticaSprites) {
+                        const img = new Image();
+                        img.src = this.subnauticaSprites[key];
+                        this.subnauticaImages[key] = img;
+                    }
                 }
-            }
-            
-            // Seleccionar submarino según nivel
-            const subType = window.ProfessionalSubmarines.getSubmarineForLevel(enemy.level);
-            const img = this.professionalImages[subType];
-            
-            if (img && img.complete) {
-                // Dibujar submarino profesional
-                const scale = enemy.size / 25;
-                ctx.scale(scale, scale);
-                ctx.drawImage(img, -100, -50, 200, 100);
+                
+                const vehicle = window.SubnauticaVehicles.getVehicleSprite(enemy.level);
+                const vehicleKey = vehicle === window.SubnauticaVehicles.seamoth ? 'seamoth' :
+                                  vehicle === window.SubnauticaVehicles.cyclops ? 'cyclops' : 'prawnSuit';
+                const img = this.subnauticaImages[vehicleKey];
+                
+                if (img && img.complete) {
+                    const scale = enemy.size / 25;
+                    ctx.scale(scale, scale);
+                    ctx.drawImage(img, -100, -50, 200, 100);
+                } else {
+                    sprite.draw(ctx, enemy);
+                }
+            } else if (window.ProfessionalSubmarines) {
+                // Usar submarinos profesionales
+                if (!this.professionalSprites) {
+                    this.professionalSprites = window.ProfessionalSubmarines.loadSprites();
+                    this.professionalImages = {};
+                    
+                    for (let key in this.professionalSprites) {
+                        const img = new Image();
+                        img.src = this.professionalSprites[key];
+                        this.professionalImages[key] = img;
+                    }
+                }
+                
+                const subType = window.ProfessionalSubmarines.getSubmarineForLevel(enemy.level);
+                const img = this.professionalImages[subType];
+                
+                if (img && img.complete) {
+                    const scale = enemy.size / 25;
+                    ctx.scale(scale, scale);
+                    ctx.drawImage(img, -100, -50, 200, 100);
+                } else {
+                    sprite.draw(ctx, enemy);
+                }
             } else {
-                // Fallback al sprite original mientras carga
+                // Fallback al sprite básico de nave
                 sprite.draw(ctx, enemy);
             }
         } else {
-            // Dibujar sprite normal (criatura marina o nave básica)
+            // Dibujar sprite normal (criatura marina para IDs pares, nave básica para impares sin profesionales)
             sprite.draw(ctx, enemy);
         }
         
