@@ -7,6 +7,11 @@ const script = document.createElement('script');
 script.src = 'assets/sprites.js';
 document.head.appendChild(script);
 
+// Incluir el sistema del mercader
+const merchantScript = document.createElement('script');
+merchantScript.src = 'assets/merchant-system.js';
+document.head.appendChild(merchantScript);
+
 // Variables del juego
 let gameState = {
     player: null,
@@ -114,9 +119,12 @@ class Player {
         
         // Stats de combate (daño reducido al principio)
         this.damage = 10; // Reducido de 20 a 10
+        this.baseDamage = 10; // Daño base del arma equipada
         this.attackSpeed = 800; // Más rápido
         this.range = 200; // Mayor rango
         this.lastAttack = 0;
+        this.healthRegen = 0; // Regeneración de vida por segundo
+        this.lastRegen = Date.now();
         
         // Mejoras
         this.upgrades = {
@@ -129,6 +137,11 @@ class Player {
         // Animación
         this.propellerAngle = 0;
         this.targetAngle = 0;
+        
+        // Visuales del equipo
+        this.weaponVisual = null;
+        this.shieldVisual = null;
+        this.engineVisual = null;
     }
     
     update() {
@@ -168,6 +181,13 @@ class Player {
         const cameraLerpSpeed = 0.1;
         gameState.camera.x += (this.x - canvas.width / 2 - gameState.camera.x) * cameraLerpSpeed;
         gameState.camera.y += (this.y - canvas.height / 2 - gameState.camera.y) * cameraLerpSpeed;
+        
+        // Regeneración de vida
+        if (this.healthRegen > 0 && Date.now() - this.lastRegen > 1000) {
+            this.health = Math.min(this.maxHealth, this.health + this.healthRegen);
+            this.lastRegen = Date.now();
+            this.updateUI();
+        }
         
         // Ataque automático al objetivo seleccionado
         this.autoAttack();
@@ -216,7 +236,19 @@ class Player {
         }
         
         if (distance <= this.range) {
-            const projectile = new Projectile(this.x, this.y, target.x, target.y, this.damage * (1 + this.upgrades.weapon * 0.25));
+            // Usar el daño del arma equipada
+            const weaponDamage = this.baseDamage || this.damage;
+            const totalDamage = weaponDamage * (1 + this.upgrades.weapon * 0.25);
+            const projectile = new Projectile(this.x, this.y, target.x, target.y, totalDamage);
+            
+            // Aplicar visual del arma si existe
+            if (window.MerchantSystem) {
+                const weapon = window.MerchantSystem.getEquippedItem('weapon');
+                if (weapon && weapon.visual) {
+                    projectile.visual = weapon.visual;
+                }
+            }
+            
             gameState.projectiles.push(projectile);
             this.lastAttack = Date.now();
             
@@ -743,6 +775,9 @@ class Projectile {
         this.angle = Math.atan2(dy, dx);
         this.lifetime = 100;
         this.trail = [];
+        
+        // Visual del arma (se asigna desde el jugador)
+        this.visual = null;
     }
     
     update() {
@@ -777,40 +812,126 @@ class Projectile {
         const screenX = this.x - gameState.camera.x;
         const screenY = this.y - gameState.camera.y;
         
-        // Dibujar rastro de burbujas
+        // Obtener visual del arma
+        const v = this.visual || {
+            color: '#74C0FC',
+            size: 6,
+            trail: 5,
+            glow: false
+        };
+        
+        // Efecto de resplandor si el arma lo tiene
+        if (v.glow) {
+            ctx.save();
+            ctx.globalAlpha = 0.6;
+            const glowGradient = ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, v.size * 3);
+            glowGradient.addColorStop(0, v.glowColor || v.color);
+            glowGradient.addColorStop(1, 'transparent');
+            ctx.fillStyle = glowGradient;
+            ctx.beginPath();
+            ctx.arc(screenX, screenY, v.size * 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+        
+        // Dibujar rastro de burbujas mejorado
         this.trail.forEach((pos, index) => {
             ctx.save();
-            ctx.globalAlpha = index / this.trail.length * 0.5;
-            ctx.fillStyle = '#74C0FC';
+            ctx.globalAlpha = index / this.trail.length * 0.7;
+            ctx.fillStyle = v.color;
+            const trailSize = (v.trail || 5) - index * 0.3;
             ctx.beginPath();
-            ctx.arc(pos.x - gameState.camera.x, pos.y - gameState.camera.y, 3 - index * 0.2, 0, Math.PI * 2);
+            ctx.arc(pos.x - gameState.camera.x, pos.y - gameState.camera.y, trailSize, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
         });
         
-        // Dibujar torpedo
+        // Partículas adicionales para armas avanzadas
+        if (v.particles) {
+            ctx.save();
+            ctx.globalAlpha = 0.5;
+            for (let i = 0; i < 3; i++) {
+                const offsetX = Math.random() * 10 - 5;
+                const offsetY = Math.random() * 10 - 5;
+                ctx.fillStyle = v.color;
+                ctx.beginPath();
+                ctx.arc(screenX + offsetX, screenY + offsetY, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+        
+        // Efecto eléctrico para armas avanzadas
+        if (v.electric) {
+            ctx.save();
+            ctx.strokeStyle = v.color;
+            ctx.lineWidth = 1;
+            ctx.globalAlpha = 0.6;
+            ctx.beginPath();
+            for (let i = 0; i < 2; i++) {
+                ctx.moveTo(screenX, screenY);
+                ctx.lineTo(
+                    screenX + Math.random() * 20 - 10,
+                    screenY + Math.random() * 20 - 10
+                );
+            }
+            ctx.stroke();
+            ctx.restore();
+        }
+        
+        // Dibujar torpedo principal
         ctx.save();
         ctx.translate(screenX, screenY);
         ctx.rotate(this.angle);
         
-        // Torpedo principal
-        const gradient = ctx.createLinearGradient(-5, 0, 5, 0);
-        gradient.addColorStop(0, '#339AF0');
-        gradient.addColorStop(0.5, '#74C0FC');
-        gradient.addColorStop(1, '#A5D8FF');
+        // Torpedo con color del arma
+        const gradient = ctx.createLinearGradient(-v.size, 0, v.size, 0);
+        gradient.addColorStop(0, v.color);
+        gradient.addColorStop(0.5, this.lightenColor(v.color, 20));
+        gradient.addColorStop(1, this.lightenColor(v.color, 40));
         
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.ellipse(0, 0, 6, 3, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, v.size, v.size * 0.5, 0, 0, Math.PI * 2);
         ctx.fill();
+        
+        // Borde del torpedo
+        ctx.strokeStyle = v.color;
+        ctx.lineWidth = 1;
+        ctx.stroke();
         
         // Brillo
         ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
         ctx.beginPath();
-        ctx.ellipse(-2, -1, 2, 1, 0, 0, Math.PI * 2);
+        ctx.ellipse(-v.size * 0.3, -v.size * 0.2, v.size * 0.3, v.size * 0.2, 0, 0, Math.PI * 2);
         ctx.fill();
         
+        // Efecto vórtice para armas más poderosas
+        if (v.vortex) {
+            ctx.strokeStyle = v.color;
+            ctx.lineWidth = 2;
+            ctx.globalAlpha = 0.3;
+            for (let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.arc(0, 0, v.size * (2 + i), 0, Math.PI * 2);
+                ctx.stroke();
+            }
+        }
+        
         ctx.restore();
+    }
+    
+    // Función auxiliar para aclarar colores
+    lightenColor(color, percent) {
+        // Convertir color hex a RGB y aclarar
+        if (color.startsWith('#')) {
+            const num = parseInt(color.slice(1), 16);
+            const r = Math.min(255, (num >> 16) + percent);
+            const g = Math.min(255, ((num >> 8) & 0x00FF) + percent);
+            const b = Math.min(255, (num & 0x0000FF) + percent);
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+        return color;
     }
 }
 
@@ -1118,6 +1239,21 @@ document.addEventListener('keydown', (e) => {
         e.preventDefault();
         gameState.player.selectTarget();
     }
+    
+    // M para abrir el mercader
+    if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        if (window.MerchantSystem && !window.MerchantSystem.isOpen) {
+            window.MerchantSystem.openShop();
+        }
+    }
+    
+    // ESC para cerrar el mercader
+    if (e.key === 'Escape') {
+        if (window.MerchantSystem && window.MerchantSystem.isOpen) {
+            window.MerchantSystem.closeShop();
+        }
+    }
 });
 
 document.addEventListener('keyup', (e) => {
@@ -1249,7 +1385,7 @@ function render() {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
     ctx.font = '10px Arial';
     ctx.textAlign = 'right';
-    ctx.fillText('WASD: Mover | ESPACIO: Seleccionar objetivo | Click: Selección manual', canvas.width - 10, canvas.height - 10);
+    ctx.fillText('WASD: Mover | ESPACIO: Seleccionar objetivo | M: Tienda | Click: Selección manual', canvas.width - 10, canvas.height - 10);
 }
 
 // Bucle principal del juego
@@ -1277,6 +1413,23 @@ function init() {
             gameState.spritesLoaded = true;
             console.log('Sprites cargados correctamente');
         });
+    }
+    
+    // Inicializar sistema del mercader
+    if (window.MerchantSystem) {
+        window.MerchantSystem.init();
+        console.log('Sistema del mercader inicializado');
+        
+        // Mostrar notificación del mercader después de 3 segundos
+        setTimeout(() => {
+            const notification = document.getElementById('merchantNotification');
+            if (notification) {
+                notification.style.display = 'block';
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                }, 3000);
+            }
+        }, 3000);
     }
     
     // Iniciar bucle del juego
