@@ -20,6 +20,7 @@ let gameState = {
     gems: [],
     particles: [],
     bubbles: [],
+    merchantStations: [],
     mouse: { x: canvas.width/2, y: canvas.height/2 },
     selectedTarget: null,
     gameRunning: true,
