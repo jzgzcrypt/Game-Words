@@ -47,6 +47,11 @@ const proSubmarinesScript = document.createElement('script');
 proSubmarinesScript.src = 'assets/professional-submarines.js';
 document.head.appendChild(proSubmarinesScript);
 
+// Incluir vehículos estilo Subnautica
+const subnauticaScript = document.createElement('script');
+subnauticaScript.src = 'assets/subnautica-vehicles.js';
+document.head.appendChild(subnauticaScript);
+
 // Variables del juego
 let gameState = {
     player: null,
