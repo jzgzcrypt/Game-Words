@@ -52,6 +52,16 @@ const subnauticaScript = document.createElement('script');
 subnauticaScript.src = 'assets/subnautica-vehicles.js';
 document.head.appendChild(subnauticaScript);
 
+// Incluir submarino profesional del jugador
+const playerSubScript = document.createElement('script');
+playerSubScript.src = 'assets/player-submarine.js';
+document.head.appendChild(playerSubScript);
+
+// Incluir taberna del mercader
+const merchantTavernScript = document.createElement('script');
+merchantTavernScript.src = 'assets/merchant-tavern.js';
+document.head.appendChild(merchantTavernScript);
+
 // Variables del juego
 let gameState = {
     player: null,
@@ -446,7 +456,18 @@ class Player {
         const screenX = this.x - gameState.camera.x;
         const screenY = this.y - gameState.camera.y;
         
-        // Usar sprites realistas si están disponibles
+        // Usar el nuevo submarino profesional si está disponible
+        if (window.PlayerSubmarine) {
+            ctx.save();
+            ctx.translate(screenX, screenY);
+            ctx.rotate(this.angle);
+            window.PlayerSubmarine.draw(ctx, this);
+            ctx.restore();
+            this.drawHealthBar(screenX, screenY);
+            return;
+        }
+        
+        // Fallback a sprites realistas si están disponibles
         if (gameState.realisticSpritesLoaded && window.RealisticSprites) {
             const effects = {
                 damaged: this.health < this.maxHealth * 0.5,
@@ -1502,6 +1523,15 @@ class MerchantStation {
         // Solo dibujar si está en pantalla
         if (screenX < -100 || screenX > canvas.width + 100 || 
             screenY < -100 || screenY > canvas.height + 100) {
+            return;
+        }
+        
+        // Usar la nueva taberna submarina si está disponible
+        if (window.MerchantTavern) {
+            ctx.save();
+            ctx.translate(screenX, screenY);
+            window.MerchantTavern.draw(ctx, this);
+            ctx.restore();
             return;
         }
         
