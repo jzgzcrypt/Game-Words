@@ -1,41 +1,41 @@
-// Taberna/Tenderete Submarino del Mercader - Diseño Artístico Realista
+// Estación de Comercio Submarina - Diseño Integrado con el Entorno
 const MerchantTavern = {
-    // Crear el diseño de la taberna submarina
+    // Crear el diseño de la estación de comercio submarina
     createTavernSVG: function() {
         return `
         <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
             <defs>
-                <!-- Gradiente de roca -->
-                <linearGradient id="rockGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style="stop-color:#5D4E37;stop-opacity:1" />
-                    <stop offset="30%" style="stop-color:#3E2723;stop-opacity:1" />
-                    <stop offset="70%" style="stop-color:#4E342E;stop-opacity:1" />
-                    <stop offset="100%" style="stop-color:#3E2723;stop-opacity:1" />
+                <!-- Gradiente de coral -->
+                <linearGradient id="coralGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#FF6B9D;stop-opacity:0.8" />
+                    <stop offset="30%" style="stop-color:#C44569;stop-opacity:0.9" />
+                    <stop offset="70%" style="stop-color:#A8395C;stop-opacity:0.9" />
+                    <stop offset="100%" style="stop-color:#723C5C;stop-opacity:1" />
                 </linearGradient>
                 
-                <!-- Gradiente de madera -->
-                <linearGradient id="woodGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" style="stop-color:#8D6E63;stop-opacity:1" />
-                    <stop offset="25%" style="stop-color:#6D4C41;stop-opacity:1" />
-                    <stop offset="50%" style="stop-color:#5D4037;stop-opacity:1" />
-                    <stop offset="75%" style="stop-color:#6D4C41;stop-opacity:1" />
-                    <stop offset="100%" style="stop-color:#4E342E;stop-opacity:1" />
+                <!-- Gradiente de estructura metálica submarina -->
+                <linearGradient id="metalGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#B0BEC5;stop-opacity:1" />
+                    <stop offset="25%" style="stop-color:#78909C;stop-opacity:1" />
+                    <stop offset="50%" style="stop-color:#546E7A;stop-opacity:1" />
+                    <stop offset="75%" style="stop-color:#455A64;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#37474F;stop-opacity:1" />
                 </linearGradient>
                 
-                <!-- Luz cálida de linterna -->
-                <radialGradient id="lanternGlow">
-                    <stop offset="0%" style="stop-color:#FFE082;stop-opacity:1" />
-                    <stop offset="30%" style="stop-color:#FFB74D;stop-opacity:0.8" />
-                    <stop offset="60%" style="stop-color:#FF9800;stop-opacity:0.5" />
-                    <stop offset="100%" style="stop-color:#E65100;stop-opacity:0" />
+                <!-- Luz bioluminiscente -->
+                <radialGradient id="bioGlow">
+                    <stop offset="0%" style="stop-color:#00E5FF;stop-opacity:1" />
+                    <stop offset="30%" style="stop-color:#00ACC1;stop-opacity:0.8" />
+                    <stop offset="60%" style="stop-color:#00838F;stop-opacity:0.5" />
+                    <stop offset="100%" style="stop-color:#006064;stop-opacity:0" />
                 </radialGradient>
                 
-                <!-- Tela del toldo -->
-                <linearGradient id="canvasGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style="stop-color:#D7CCC8;stop-opacity:0.9" />
-                    <stop offset="50%" style="stop-color:#BCAAA4;stop-opacity:0.9" />
-                    <stop offset="100%" style="stop-color:#8D6E63;stop-opacity:0.9" />
-                </linearGradient>
+                <!-- Cristal de domo -->
+                <radialGradient id="domeGradient" cx="50%" cy="30%">
+                    <stop offset="0%" style="stop-color:#E0F7FA;stop-opacity:0.3" />
+                    <stop offset="50%" style="stop-color:#4DD0E1;stop-opacity:0.2" />
+                    <stop offset="100%" style="stop-color:#0097A7;stop-opacity:0.1" />
+                </radialGradient>
                 
                 <!-- Agua con reflejos -->
                 <linearGradient id="waterGradient" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -57,121 +57,129 @@ const MerchantTavern = {
                 </filter>
             </defs>
             
-            <!-- Formación rocosa -->
-            <path d="M 0 100 Q 30 70, 80 80 L 100 85 Q 120 90, 140 85 L 180 80 Q 220 70, 250 85 L 280 90 L 300 95 L 300 200 L 0 200 Z" 
-                  fill="url(#rockGradient)"/>
-            
-            <!-- Grietas en la roca -->
-            <path d="M 50 90 L 55 120 L 52 150" stroke="#2E1A1A" stroke-width="2" opacity="0.5" fill="none"/>
-            <path d="M 120 85 L 118 110 L 122 140" stroke="#2E1A1A" stroke-width="2" opacity="0.5" fill="none"/>
-            <path d="M 200 82 L 195 105 L 198 130" stroke="#2E1A1A" stroke-width="2" opacity="0.5" fill="none"/>
-            
-            <!-- Cueva/hueco en la roca -->
-            <ellipse cx="150" cy="120" rx="70" ry="40" fill="#1A1A1A" opacity="0.7"/>
-            
-            <!-- Estructura del tenderete -->
-            <!-- Postes de madera -->
-            <rect x="95" y="60" width="8" height="80" fill="url(#woodGradient)" filter="url(#shadow)"/>
-            <rect x="195" y="60" width="8" height="80" fill="url(#woodGradient)" filter="url(#shadow)"/>
-            
-            <!-- Viga horizontal -->
-            <rect x="95" y="60" width="108" height="10" fill="url(#woodGradient)"/>
-            
-            <!-- Toldo/tela -->
-            <path d="M 85 65 Q 150 50, 215 65 L 210 90 Q 150 85, 90 90 Z" 
-                  fill="url(#canvasGradient)" filter="url(#shadow)"/>
-            
-            <!-- Parches en el toldo -->
-            <rect x="120" y="70" width="15" height="10" fill="#A1887F" opacity="0.7" transform="rotate(-5 127.5 75)"/>
-            <rect x="160" y="68" width="12" height="12" fill="#8D6E63" opacity="0.6" transform="rotate(3 166 74)"/>
-            
-            <!-- Mostrador de madera -->
-            <rect x="100" y="110" width="100" height="8" fill="url(#woodGradient)"/>
-            <rect x="100" y="118" width="100" height="25" fill="#4E342E"/>
-            
-            <!-- Detalles del mostrador -->
-            <line x1="100" y1="125" x2="200" y2="125" stroke="#3E2723" stroke-width="1"/>
-            <line x1="100" y1="135" x2="200" y2="135" stroke="#3E2723" stroke-width="1"/>
-            
-            <!-- Objetos sobre el mostrador -->
-            <!-- Balanza antigua -->
-            <ellipse cx="120" cy="110" rx="8" ry="2" fill="#8D6E63"/>
-            <line x1="120" y1="110" x2="120" y2="100" stroke="#6D4C41" stroke-width="2"/>
-            <line x1="110" y1="100" x2="130" y2="100" stroke="#6D4C41" stroke-width="2"/>
-            <circle cx="110" cy="102" r="4" fill="#795548"/>
-            <circle cx="130" cy="98" r="4" fill="#795548"/>
-            
-            <!-- Cofre del tesoro -->
-            <rect x="160" y="100" width="25" height="15" rx="2" fill="#6D4C41"/>
-            <rect x="160" y="100" width="25" height="8" rx="2" fill="#8D6E63"/>
-            <rect x="170" y="105" width="5" height="5" fill="#FFD700"/>
-            
-            <!-- Botellas -->
-            <rect x="140" y="95" width="6" height="15" fill="#1B5E20" opacity="0.8"/>
-            <ellipse cx="143" cy="95" rx="3" ry="2" fill="#2E7D32"/>
-            <rect x="148" y="98" width="5" height="12" fill="#0D47A1" opacity="0.8"/>
-            <ellipse cx="150.5" cy="98" rx="2.5" ry="1.5" fill="#1565C0"/>
-            
-            <!-- Linternas colgantes -->
-            <g id="lantern">
-                <line x1="0" y1="0" x2="0" y2="10" stroke="#3E2723" stroke-width="1"/>
-                <rect x="-5" y="10" width="10" height="12" fill="#5D4037"/>
-                <rect x="-4" y="11" width="8" height="10" fill="#FFE082" opacity="0.7"/>
-                <circle cx="0" cy="16" r="15" fill="url(#lanternGlow)" opacity="0.6"/>
-            </g>
-            <use href="#lantern" transform="translate(110, 65)"/>
-            <use href="#lantern" transform="translate(190, 65)"/>
-            
-            <!-- Cartel de madera -->
-            <rect x="130" y="30" width="40" height="25" fill="url(#woodGradient)" transform="rotate(-3 150 42.5)"/>
-            <text x="150" y="40" font-family="serif" font-size="8" fill="#D7CCC8" text-anchor="middle">MERCADER</text>
-            <text x="150" y="48" font-family="serif" font-size="6" fill="#BCAAA4" text-anchor="middle">SUBMARINO</text>
-            
-            <!-- Cuerda con objetos colgando -->
-            <path d="M 95 70 Q 150 75, 203 70" stroke="#6D4C41" stroke-width="2" fill="none"/>
-            
-            <!-- Objetos colgando de la cuerda -->
-            <!-- Red de pesca -->
-            <g transform="translate(115, 75)">
-                <path d="M 0 0 L -5 8 L 0 10 L 5 8 Z" fill="none" stroke="#8D6E63" stroke-width="0.5"/>
-                <path d="M -2 2 L 2 2 M -3 4 L 3 4 M -4 6 L 4 6" stroke="#8D6E63" stroke-width="0.5"/>
+            <!-- Base de coral viviente -->
+            <g id="coralBase">
+                <!-- Coral principal -->
+                <path d="M 100 150 Q 80 130, 90 110 T 100 90 Q 110 100, 120 110 T 130 130 Q 120 140, 100 150" 
+                      fill="url(#coralGradient)" opacity="0.8"/>
+                <path d="M 170 140 Q 160 125, 165 110 T 175 95 Q 180 105, 185 115 T 190 130 Q 180 135, 170 140" 
+                      fill="url(#coralGradient)" opacity="0.7"/>
+                <path d="M 200 145 Q 195 135, 198 125 T 205 115 Q 208 120, 210 125 T 212 135 Q 207 140, 200 145" 
+                      fill="url(#coralGradient)" opacity="0.6"/>
+                
+                <!-- Anémonas -->
+                <ellipse cx="80" cy="140" rx="15" ry="25" fill="#FF6B9D" opacity="0.5"/>
+                <ellipse cx="220" cy="135" rx="12" ry="20" fill="#C44569" opacity="0.5"/>
             </g>
             
-            <!-- Concha -->
-            <g transform="translate(150, 73)">
-                <ellipse cx="0" cy="0" rx="6" ry="8" fill="#F8BBD0" transform="rotate(10)"/>
-                <path d="M -6 0 L 0 -8 L 6 0" stroke="#E91E63" stroke-width="0.5" fill="none"/>
+            <!-- Estructura principal de la estación -->
+            <!-- Base metálica circular -->
+            <ellipse cx="150" cy="120" rx="80" ry="30" fill="url(#metalGradient)" opacity="0.9"/>
+            
+            <!-- Soportes estructurales -->
+            <rect x="110" y="90" width="6" height="40" fill="#37474F"/>
+            <rect x="184" y="90" width="6" height="40" fill="#37474F"/>
+            <rect x="147" y="85" width="6" height="45" fill="#37474F"/>
+            
+            <!-- Domo de cristal -->
+            <ellipse cx="150" cy="100" rx="70" ry="45" fill="url(#domeGradient)"/>
+            <ellipse cx="150" cy="100" rx="70" ry="45" fill="none" stroke="#4DD0E1" stroke-width="2" opacity="0.5"/>
+            
+            <!-- Detalles del domo -->
+            <path d="M 80 100 Q 150 70, 220 100" stroke="#00ACC1" stroke-width="1" opacity="0.4" fill="none"/>
+            <path d="M 90 90 Q 150 75, 210 90" stroke="#00ACC1" stroke-width="1" opacity="0.3" fill="none"/>
+            <path d="M 100 80 Q 150 65, 200 80" stroke="#00ACC1" stroke-width="1" opacity="0.2" fill="none"/>
+            
+            <!-- Plataforma de intercambio -->
+            <ellipse cx="150" cy="110" rx="40" ry="15" fill="#546E7A" opacity="0.8"/>
+            <ellipse cx="150" cy="108" rx="35" ry="12" fill="#607D8B"/>
+            
+            <!-- Panel holográfico de comercio -->
+            <rect x="120" y="85" width="60" height="40" rx="3" fill="rgba(0, 229, 255, 0.1)" stroke="#00E5FF" stroke-width="1"/>
+            
+            <!-- Interfaz holográfica -->
+            <line x1="125" y1="95" x2="175" y2="95" stroke="#00E5FF" stroke-width="0.5" opacity="0.7"/>
+            <line x1="125" y1="105" x2="175" y2="105" stroke="#00E5FF" stroke-width="0.5" opacity="0.7"/>
+            <line x1="125" y1="115" x2="175" y2="115" stroke="#00E5FF" stroke-width="0.5" opacity="0.7"/>
+            
+            <!-- Contenedores de mercancía flotantes -->
+            <!-- Cápsula de almacenamiento 1 -->
+            <ellipse cx="110" cy="100" rx="12" ry="20" fill="rgba(77, 208, 225, 0.3)" stroke="#4DD0E1" stroke-width="1"/>
+            <ellipse cx="110" cy="95" rx="8" ry="3" fill="#4DD0E1" opacity="0.7"/>
+            <ellipse cx="110" cy="105" rx="8" ry="3" fill="#4DD0E1" opacity="0.7"/>
+            
+            <!-- Cápsula de almacenamiento 2 -->
+            <ellipse cx="190" cy="100" rx="12" ry="20" fill="rgba(77, 208, 225, 0.3)" stroke="#4DD0E1" stroke-width="1"/>
+            <ellipse cx="190" cy="95" rx="8" ry="3" fill="#4DD0E1" opacity="0.7"/>
+            <ellipse cx="190" cy="105" rx="8" ry="3" fill="#4DD0E1" opacity="0.7"/>
+            
+            <!-- Perlas y gemas flotantes -->
+            <circle cx="130" cy="95" r="3" fill="#E0F7FA" opacity="0.9"/>
+            <circle cx="170" cy="98" r="3" fill="#B2EBF2" opacity="0.9"/>
+            <circle cx="150" cy="100" r="4" fill="#80DEEA" opacity="0.8"/>
+            
+            <!-- Luces bioluminiscentes -->
+            <g id="bioLight">
+                <circle cx="0" cy="0" r="8" fill="url(#bioGlow)" opacity="0.8">
+                    <animate attributeName="opacity" values="0.8;0.3;0.8" dur="3s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="0" cy="0" r="4" fill="#00E5FF" opacity="0.9"/>
             </g>
+            <use href="#bioLight" transform="translate(100, 70)"/>
+            <use href="#bioLight" transform="translate(200, 70)"/>
+            <use href="#bioLight" transform="translate(150, 60)"/>
             
-            <!-- Ancla pequeña -->
-            <g transform="translate(180, 75)">
-                <line x1="0" y1="0" x2="0" y2="8" stroke="#546E7A" stroke-width="2"/>
-                <path d="M -4 6 Q 0 10, 4 6" stroke="#546E7A" stroke-width="2" fill="none"/>
-                <circle cx="0" cy="1" r="1.5" fill="none" stroke="#546E7A" stroke-width="1"/>
+            <!-- Identificación holográfica -->
+            <text x="150" y="75" font-family="Arial" font-size="10" fill="#00E5FF" text-anchor="middle" opacity="0.8">ESTACIÓN DE COMERCIO</text>
+            <text x="150" y="130" font-family="Arial" font-size="8" fill="#4DD0E1" text-anchor="middle" opacity="0.6">SECTOR 7-A</text>
+            
+            <!-- Tubos de conexión -->
+            <rect x="70" y="105" width="30" height="8" rx="4" fill="#455A64" opacity="0.7"/>
+            <rect x="200" y="105" width="30" height="8" rx="4" fill="#455A64" opacity="0.7"/>
+            <circle cx="75" cy="109" r="3" fill="#00ACC1" opacity="0.8"/>
+            <circle cx="225" cy="109" r="3" fill="#00ACC1" opacity="0.8"/>
+            
+            <!-- Plantas acuáticas bioluminiscentes -->
+            <g id="seaweed">
+                <path d="M 0 20 Q -5 15, 0 10 T 0 0" stroke="#00E676" stroke-width="2" fill="none" opacity="0.6">
+                    <animate attributeName="d" 
+                        values="M 0 20 Q -5 15, 0 10 T 0 0;
+                                M 0 20 Q 5 15, 0 10 T 0 0;
+                                M 0 20 Q -5 15, 0 10 T 0 0"
+                        dur="4s" repeatCount="indefinite"/>
+                </path>
+                <circle cx="0" cy="5" r="2" fill="#00E676" opacity="0.5"/>
+                <circle cx="0" cy="15" r="2" fill="#00E676" opacity="0.5"/>
             </g>
+            <use href="#seaweed" transform="translate(60, 130)"/>
+            <use href="#seaweed" transform="translate(240, 125) scale(0.8)"/>
+            <use href="#seaweed" transform="translate(90, 135) scale(1.2)"/>
             
-            <!-- Barriles apilados al lado -->
-            <ellipse cx="80" cy="130" rx="12" ry="6" fill="#6D4C41"/>
-            <rect x="68" y="115" width="24" height="15" fill="#5D4037"/>
-            <ellipse cx="80" cy="115" rx="12" ry="6" fill="#795548"/>
-            <line x1="68" y1="120" x2="92" y2="120" stroke="#4E342E" stroke-width="1"/>
-            <line x1="68" y1="125" x2="92" y2="125" stroke="#4E342E" stroke-width="1"/>
+            <!-- Escáner de identificación -->
+            <rect x="145" y="90" width="10" height="15" rx="2" fill="#37474F"/>
+            <rect x="147" y="92" width="6" height="6" fill="#00E5FF" opacity="0.7">
+                <animate attributeName="opacity" values="0.7;0.2;0.7" dur="2s" repeatCount="indefinite"/>
+            </rect>
             
-            <ellipse cx="220" cy="135" rx="10" ry="5" fill="#6D4C41"/>
-            <rect x="210" y="125" width="20" height="10" fill="#5D4037"/>
-            <ellipse cx="220" cy="125" rx="10" ry="5" fill="#795548"/>
+            <!-- Burbujas ambientales animadas -->
+            <circle cx="70" cy="90" r="3" fill="#B2EBF2" opacity="0.4">
+                <animate attributeName="cy" values="90;70;50" dur="3s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="0.4;0.2;0" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="230" cy="95" r="2" fill="#B2EBF2" opacity="0.4">
+                <animate attributeName="cy" values="95;75;55" dur="3.5s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="0.4;0.2;0" dur="3.5s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="150" cy="150" r="4" fill="#B2EBF2" opacity="0.3">
+                <animate attributeName="cy" values="150;130;110" dur="4s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="0.3;0.1;0" dur="4s" repeatCount="indefinite"/>
+            </circle>
             
-            <!-- Algas decorativas -->
-            <path d="M 60 140 Q 55 120, 60 100" stroke="#2E7D32" stroke-width="3" fill="none" opacity="0.6"/>
-            <path d="M 240 140 Q 245 125, 240 110" stroke="#388E3C" stroke-width="3" fill="none" opacity="0.6"/>
-            
-            <!-- Burbujas ambientales -->
-            <circle cx="70" cy="90" r="3" fill="#B2EBF2" opacity="0.4"/>
-            <circle cx="230" cy="95" r="2" fill="#B2EBF2" opacity="0.4"/>
-            <circle cx="150" cy="150" r="4" fill="#B2EBF2" opacity="0.3"/>
-            
-            <!-- Reflejo de agua -->
-            <ellipse cx="150" cy="180" rx="120" ry="20" fill="url(#waterGradient)"/>
+            <!-- Campo de energía de protección -->
+            <ellipse cx="150" cy="100" rx="95" ry="55" fill="none" stroke="#00E5FF" stroke-width="0.5" 
+                     stroke-dasharray="5,10" opacity="0.3">
+                <animate attributeName="stroke-dashoffset" from="0" to="15" dur="10s" repeatCount="indefinite"/>
+            </ellipse>
         </svg>`;
     },
     
