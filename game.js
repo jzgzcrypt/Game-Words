@@ -12,6 +12,11 @@ const merchantScript = document.createElement('script');
 merchantScript.src = 'assets/merchant-system.js';
 document.head.appendChild(merchantScript);
 
+// Incluir el sistema de evolución de la nave
+const evolutionScript = document.createElement('script');
+evolutionScript.src = 'assets/ship-evolution.js';
+document.head.appendChild(evolutionScript);
+
 // Variables del juego
 let gameState = {
     player: null,
@@ -1112,6 +1117,241 @@ class Gem {
     }
 }
 
+// Clase Estación de Mercader
+class MerchantStation {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.size = 50;
+        this.rotation = 0;
+        this.pulsePhase = Math.random() * Math.PI * 2;
+        this.discovered = false;
+        this.lastVisit = 0;
+        this.cooldown = 5000; // 5 segundos entre visitas
+    }
+    
+    update() {
+        // Rotación lenta
+        this.rotation += 0.01;
+        this.pulsePhase += 0.05;
+        
+        // Verificar proximidad del jugador
+        const player = gameState.player;
+        const dx = player.x - this.x;
+        const dy = player.y - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // Si el jugador está cerca
+        if (distance < this.size + player.size) {
+            if (!this.discovered) {
+                this.discovered = true;
+                this.showDiscoveryNotification();
+            }
+            
+            // Abrir tienda si no está en cooldown
+            if (Date.now() - this.lastVisit > this.cooldown) {
+                if (window.MerchantSystem && !window.MerchantSystem.isOpen) {
+                    window.MerchantSystem.openShop();
+                    this.lastVisit = Date.now();
+                    
+                    // Efecto de entrada
+                    for (let i = 0; i < 20; i++) {
+                        const particle = new Particle(this.x, this.y, 'bubble');
+                        particle.color = 'rgba(255, 215, 0, 0.8)';
+                        particle.size = Math.random() * 10 + 5;
+                        gameState.particles.push(particle);
+                    }
+                }
+            }
+        }
+    }
+    
+    draw() {
+        const screenX = this.x - gameState.camera.x;
+        const screenY = this.y - gameState.camera.y;
+        
+        // Solo dibujar si está en pantalla
+        if (screenX < -100 || screenX > canvas.width + 100 || 
+            screenY < -100 || screenY > canvas.height + 100) {
+            return;
+        }
+        
+        ctx.save();
+        ctx.translate(screenX, screenY);
+        
+        // Efecto de resplandor pulsante
+        const pulseSize = this.size + Math.sin(this.pulsePhase) * 10;
+        const glowGradient = ctx.createRadialGradient(0, 0, pulseSize * 0.5, 0, 0, pulseSize * 1.5);
+        glowGradient.addColorStop(0, 'rgba(255, 215, 0, 0.3)');
+        glowGradient.addColorStop(0.5, 'rgba(255, 215, 0, 0.1)');
+        glowGradient.addColorStop(1, 'transparent');
+        
+        ctx.fillStyle = glowGradient;
+        ctx.beginPath();
+        ctx.arc(0, 0, pulseSize * 1.5, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Plataforma principal
+        ctx.rotate(this.rotation);
+        
+        // Base de la estación
+        const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size);
+        gradient.addColorStop(0, '#FFD700');
+        gradient.addColorStop(0.5, '#FFA500');
+        gradient.addColorStop(1, '#FF8C00');
+        
+        ctx.fillStyle = gradient;
+        ctx.strokeStyle = '#B8860B';
+        ctx.lineWidth = 3;
+        
+        // Forma octagonal
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2;
+            const x = Math.cos(angle) * this.size;
+            const y = Math.sin(angle) * this.size;
+            if (i === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        
+        // Detalles de la estación
+        ctx.strokeStyle = '#FFD700';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(Math.cos(angle) * this.size, Math.sin(angle) * this.size);
+            ctx.stroke();
+        }
+        
+        // Núcleo central
+        const coreGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size * 0.3);
+        coreGradient.addColorStop(0, '#FFFFFF');
+        coreGradient.addColorStop(0.5, '#FFD700');
+        coreGradient.addColorStop(1, '#FFA500');
+        
+        ctx.fillStyle = coreGradient;
+        ctx.beginPath();
+        ctx.arc(0, 0, this.size * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Símbolo del mercader (concha)
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🐚', 0, 0);
+        
+        ctx.restore();
+        
+        // Indicador de distancia si está descubierta
+        if (this.discovered) {
+            const dx = this.x - gameState.player.x;
+            const dy = this.y - gameState.player.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance > 200 && distance < 1000) {
+                // Flecha indicadora en el borde de la pantalla
+                const angle = Math.atan2(dy, dx);
+                const edgeX = canvas.width/2 + Math.cos(angle) * 300;
+                const edgeY = canvas.height/2 + Math.sin(angle) * 300;
+                
+                ctx.save();
+                ctx.translate(edgeX, edgeY);
+                ctx.rotate(angle + Math.PI);
+                
+                ctx.fillStyle = 'rgba(255, 215, 0, 0.7)';
+                ctx.beginPath();
+                ctx.moveTo(10, 0);
+                ctx.lineTo(-10, -10);
+                ctx.lineTo(-10, 10);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.restore();
+                
+                // Distancia
+                ctx.fillStyle = 'rgba(255, 215, 0, 0.9)';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${Math.floor(distance)}m`, edgeX, edgeY + 20);
+            }
+        }
+        
+        // Texto flotante
+        if (this.discovered && !window.MerchantSystem?.isOpen) {
+            const dx = this.x - gameState.player.x;
+            const dy = this.y - gameState.player.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < 150) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('¡Mercader Aquí!', screenX, screenY - this.size - 20);
+                
+                if (distance < this.size + gameState.player.size + 10) {
+                    ctx.font = '12px Arial';
+                    ctx.fillText('Acércate para comerciar', screenX, screenY - this.size - 35);
+                }
+            }
+        }
+    }
+    
+    showDiscoveryNotification() {
+        const notification = document.getElementById('merchantNotification');
+        if (notification) {
+            notification.innerHTML = '<p>¡Has descubierto una <strong>Estación de Comercio</strong>!</p>';
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+    }
+}
+
+// Generador de estaciones de comercio
+function spawnMerchantStations() {
+    // Generar estaciones en ubicaciones estratégicas
+    const stationDistance = 1500; // Distancia entre estaciones
+    const playerZone = Math.floor(Math.sqrt(gameState.player.x ** 2 + gameState.player.y ** 2) / stationDistance);
+    
+    // Verificar si necesitamos generar nuevas estaciones
+    for (let i = -1; i <= 1; i++) {
+        for (let j = -1; j <= 1; j++) {
+            const zoneX = (playerZone + i) * stationDistance;
+            const zoneY = (playerZone + j) * stationDistance;
+            
+            // Verificar si ya existe una estación en esta zona
+            const exists = gameState.merchantStations.some(station => {
+                const dx = station.x - zoneX;
+                const dy = station.y - zoneY;
+                return Math.sqrt(dx * dx + dy * dy) < stationDistance / 2;
+            });
+            
+            if (!exists && Math.random() < 0.3) { // 30% de probabilidad por zona
+                const offsetX = (Math.random() - 0.5) * stationDistance * 0.5;
+                const offsetY = (Math.random() - 0.5) * stationDistance * 0.5;
+                gameState.merchantStations.push(new MerchantStation(zoneX + offsetX, zoneY + offsetY));
+            }
+        }
+    }
+    
+    // Limpiar estaciones muy lejanas
+    gameState.merchantStations = gameState.merchantStations.filter(station => {
+        const dx = station.x - gameState.player.x;
+        const dy = station.y - gameState.player.y;
+        return Math.sqrt(dx * dx + dy * dy) < stationDistance * 3;
+    });
+}
+
 // Generador de enemigos con mapa infinito mejorado
 function spawnEnemies() {
     const targetEnemyCount = 15;
@@ -1241,14 +1481,6 @@ document.addEventListener('keydown', (e) => {
         gameState.player.selectTarget();
     }
     
-    // M para abrir el mercader
-    if (e.key === 'm' || e.key === 'M') {
-        e.preventDefault();
-        if (window.MerchantSystem && !window.MerchantSystem.isOpen) {
-            window.MerchantSystem.openShop();
-        }
-    }
-    
     // ESC para cerrar el mercader
     if (e.key === 'Escape') {
         if (window.MerchantSystem && window.MerchantSystem.isOpen) {
@@ -1343,14 +1575,21 @@ function update() {
     // Actualizar partículas
     gameState.particles = gameState.particles.filter(particle => particle.update());
     
-    // Generar más enemigos
+    // Actualizar estaciones de comercio
+    gameState.merchantStations.forEach(station => station.update());
+    
+    // Generar más enemigos y estaciones
     spawnEnemies();
+    spawnMerchantStations();
 }
 
 // Función de renderizado
 function render() {
     // Dibujar fondo oceánico
     drawOceanBackground();
+    
+    // Dibujar estaciones de comercio (detrás de todo)
+    gameState.merchantStations.forEach(station => station.draw());
     
     // Dibujar gemas
     gameState.gems.forEach(gem => gem.draw());
@@ -1364,8 +1603,12 @@ function render() {
     // Dibujar partículas
     gameState.particles.forEach(particle => particle.draw());
     
-    // Dibujar jugador
-    gameState.player.draw();
+    // Dibujar jugador con sistema de evolución visual
+    if (window.ShipEvolution) {
+        window.ShipEvolution.drawEvolvedShip(ctx, gameState.player);
+    } else {
+        gameState.player.draw();
+    }
     
     // UI - Indicadores en pantalla
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
@@ -1386,7 +1629,7 @@ function render() {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
     ctx.font = '10px Arial';
     ctx.textAlign = 'right';
-    ctx.fillText('WASD: Mover | ESPACIO: Seleccionar objetivo | M: Tienda | Click: Selección manual', canvas.width - 10, canvas.height - 10);
+    ctx.fillText('WASD: Mover | ESPACIO: Seleccionar objetivo | Click: Selección manual | 🐚 Busca mercaderes', canvas.width - 10, canvas.height - 10);
 }
 
 // Bucle principal del juego
@@ -1420,18 +1663,10 @@ function init() {
     if (window.MerchantSystem) {
         window.MerchantSystem.init();
         console.log('Sistema del mercader inicializado');
-        
-        // Mostrar notificación del mercader después de 3 segundos
-        setTimeout(() => {
-            const notification = document.getElementById('merchantNotification');
-            if (notification) {
-                notification.style.display = 'block';
-                setTimeout(() => {
-                    notification.style.display = 'none';
-                }, 3000);
-            }
-        }, 3000);
     }
+    
+    // Generar primera estación de comercio cerca del spawn
+    gameState.merchantStations.push(new MerchantStation(300, 300));
     
     // Iniciar bucle del juego
     gameLoop();
