@@ -2,9 +2,10 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Cargar sprites marinos
-const sprites = {};
-let spritesLoaded = false;
+// Incluir el script de sprites
+const script = document.createElement('script');
+script.src = 'assets/sprites.js';
+document.head.appendChild(script);
 
 // Variables del juego
 let gameState = {
@@ -14,11 +15,12 @@ let gameState = {
     gems: [],
     particles: [],
     bubbles: [],
-    mouse: { x: 0, y: 0 },
+    mouse: { x: canvas.width/2, y: canvas.height/2 },
     selectedTarget: null,
     gameRunning: true,
     camera: { x: 0, y: 0 },
-    worldOffset: { x: 0, y: 0 }
+    keys: {},
+    spritesLoaded: false
 };
 
 // Sistema de burbujas para el fondo
@@ -95,7 +97,7 @@ const levelTable = {
     }
 };
 
-// Clase Jugador (Submarino)
+// Clase Jugador (Nave Submarina Avanzada)
 class Player {
     constructor(x, y) {
         this.x = x;
@@ -106,14 +108,14 @@ class Player {
         this.exp = 0;
         this.expRequired = levelTable.getExpRequired(1);
         this.gems = 0;
-        this.speed = 3;
-        this.size = 20;
+        this.speed = 4;
+        this.size = 25;
         this.angle = 0;
         
-        // Stats de combate
-        this.damage = 20;
-        this.attackSpeed = 1000;
-        this.range = 150;
+        // Stats de combate (daño reducido al principio)
+        this.damage = 10; // Reducido de 20 a 10
+        this.attackSpeed = 800; // Más rápido
+        this.range = 200; // Mayor rango
         this.lastAttack = 0;
         
         // Mejoras
@@ -126,33 +128,75 @@ class Player {
         
         // Animación
         this.propellerAngle = 0;
+        this.targetAngle = 0;
     }
     
     update() {
-        // Seguir el cursor del mouse con mapa infinito
-        const targetX = gameState.mouse.x + gameState.camera.x;
-        const targetY = gameState.mouse.y + gameState.camera.y;
+        // Movimiento con teclado (WASD)
+        let dx = 0, dy = 0;
         
-        const dx = targetX - this.x;
-        const dy = targetY - this.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (gameState.keys['w'] || gameState.keys['W']) dy -= 1;
+        if (gameState.keys['s'] || gameState.keys['S']) dy += 1;
+        if (gameState.keys['a'] || gameState.keys['A']) dx -= 1;
+        if (gameState.keys['d'] || gameState.keys['D']) dx += 1;
         
-        if (distance > 5) {
-            const speed = this.speed * (1 + this.upgrades.movement * 0.2);
-            this.x += (dx / distance) * speed;
-            this.y += (dy / distance) * speed;
+        // Normalizar movimiento diagonal
+        if (dx !== 0 && dy !== 0) {
+            dx *= 0.707;
+            dy *= 0.707;
         }
         
-        // Actualizar ángulo
-        this.angle = Math.atan2(dy, dx);
+        // Aplicar movimiento
+        const speed = this.speed * (1 + this.upgrades.movement * 0.2);
+        this.x += dx * speed;
+        this.y += dy * speed;
+        
+        // Actualizar ángulo hacia el mouse
+        const mouseWorldX = gameState.mouse.x + gameState.camera.x;
+        const mouseWorldY = gameState.mouse.y + gameState.camera.y;
+        this.targetAngle = Math.atan2(mouseWorldY - this.y, mouseWorldX - this.x);
+        
+        // Suavizar rotación
+        let angleDiff = this.targetAngle - this.angle;
+        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+        this.angle += angleDiff * 0.1;
+        
         this.propellerAngle += 0.3;
         
-        // Actualizar cámara para seguir al jugador (mapa infinito)
-        gameState.camera.x = this.x - canvas.width / 2;
-        gameState.camera.y = this.y - canvas.height / 2;
+        // Actualizar cámara para seguir al jugador (mapa infinito mejorado)
+        const cameraLerpSpeed = 0.1;
+        gameState.camera.x += (this.x - canvas.width / 2 - gameState.camera.x) * cameraLerpSpeed;
+        gameState.camera.y += (this.y - canvas.height / 2 - gameState.camera.y) * cameraLerpSpeed;
         
-        // Ataque automático
+        // Ataque automático al objetivo seleccionado
         this.autoAttack();
+    }
+    
+    selectTarget() {
+        // Buscar enemigo más cercano al jugador
+        let closestEnemy = null;
+        let closestDistance = this.range;
+        
+        for (let enemy of gameState.enemies) {
+            const dx = enemy.x - this.x;
+            const dy = enemy.y - this.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < closestDistance) {
+                closestEnemy = enemy;
+                closestDistance = distance;
+            }
+        }
+        
+        gameState.selectedTarget = closestEnemy;
+        
+        // Efecto visual de selección
+        if (closestEnemy) {
+            for (let i = 0; i < 5; i++) {
+                gameState.particles.push(new Particle(closestEnemy.x, closestEnemy.y, 'selection'));
+            }
+        }
     }
     
     autoAttack() {
@@ -164,6 +208,12 @@ class Player {
         const dx = target.x - this.x;
         const dy = target.y - this.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // Verificar si el objetivo sigue vivo
+        if (!gameState.enemies.includes(target)) {
+            gameState.selectedTarget = null;
+            return;
+        }
         
         if (distance <= this.range) {
             const projectile = new Projectile(this.x, this.y, target.x, target.y, this.damage * (1 + this.upgrades.weapon * 0.25));
@@ -217,43 +267,93 @@ class Player {
     }
     
     draw() {
+        const screenX = this.x - gameState.camera.x;
+        const screenY = this.y - gameState.camera.y;
+        
         ctx.save();
-        ctx.translate(this.x - gameState.camera.x, this.y - gameState.camera.y);
+        ctx.translate(screenX, screenY);
         ctx.rotate(this.angle);
         
-        // Dibujar submarino
-        // Cuerpo principal
-        ctx.fillStyle = '#2E86AB';
-        ctx.beginPath();
-        ctx.ellipse(0, 0, this.size * 1.2, this.size * 0.6, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#1E5A7D';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        // Si los sprites están cargados, usar la imagen
+        if (gameState.spritesLoaded && window.GameSprites && window.GameSprites.get('playerSub')) {
+            const img = window.GameSprites.get('playerSub');
+            ctx.drawImage(img, -img.width/2, -img.height/2);
+        } else {
+            // Dibujar nave submarina avanzada manualmente
+            // Cuerpo principal
+            ctx.fillStyle = '#2565A3';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, this.size * 1.4, this.size * 0.7, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#1A457D';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Franja metálica central
+            ctx.fillStyle = 'rgba(74, 144, 226, 0.7)';
+            ctx.fillRect(-this.size * 1.2, -2, this.size * 2.4, 4);
+            
+            // Cabina principal
+            ctx.fillStyle = 'rgba(90, 163, 214, 0.8)';
+            ctx.beginPath();
+            ctx.ellipse(this.size * 0.3, 0, this.size * 0.6, this.size * 0.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Ventanas de la cabina
+            ctx.fillStyle = '#A8DADC';
+            ctx.strokeStyle = '#336699';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(this.size * 0.1, 0, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(this.size * 0.5, 0, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Aletas estabilizadoras
+            ctx.fillStyle = '#1A457D';
+            ctx.beginPath();
+            ctx.moveTo(-this.size * 1.2, 0);
+            ctx.lineTo(-this.size * 1.5, -this.size * 0.4);
+            ctx.lineTo(-this.size * 1.3, 0);
+            ctx.lineTo(-this.size * 1.5, this.size * 0.4);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Propulsores con animación
+            ctx.save();
+            ctx.translate(-this.size * 1.3, 0);
+            ctx.rotate(this.propellerAngle);
+            ctx.fillStyle = '#457B9D';
+            ctx.fillRect(-6, -1, 12, 2);
+            ctx.fillRect(-1, -6, 2, 12);
+            ctx.restore();
+            
+            // Cañones de torpedos
+            ctx.fillStyle = '#336699';
+            ctx.fillRect(this.size * 0.8, -this.size * 0.3, this.size * 0.4, 3);
+            ctx.fillRect(this.size * 0.8, this.size * 0.2, this.size * 0.4, 3);
+            
+            // Luces de navegación
+            ctx.fillStyle = 'rgba(255, 107, 107, 0.9)';
+            ctx.beginPath();
+            ctx.arc(this.size * 1.2, 0, 2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = 'rgba(0, 250, 154, 0.8)';
+            ctx.beginPath();
+            ctx.arc(-this.size * 0.8, -this.size * 0.3, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = 'rgba(255, 107, 107, 0.8)';
+            ctx.beginPath();
+            ctx.arc(-this.size * 0.8, this.size * 0.3, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
         
-        // Cabina
-        ctx.fillStyle = 'rgba(78, 205, 196, 0.8)';
-        ctx.beginPath();
-        ctx.ellipse(5, 0, this.size * 0.5, this.size * 0.4, 0, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Ventanas
-        ctx.fillStyle = '#A8DADC';
-        ctx.beginPath();
-        ctx.arc(-2, 0, 3, 0, Math.PI * 2);
-        ctx.arc(8, 0, 3, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Hélice
-        ctx.save();
-        ctx.translate(-this.size * 1.2, 0);
-        ctx.rotate(this.propellerAngle);
-        ctx.fillStyle = '#457B9D';
-        ctx.fillRect(-4, -1, 8, 2);
-        ctx.fillRect(-1, -4, 2, 8);
-        ctx.restore();
-        
-        // Indicador de objetivo
+        // Indicador de objetivo seleccionado
         if (gameState.selectedTarget) {
             ctx.strokeStyle = '#00FA9A';
             ctx.lineWidth = 1;
@@ -264,7 +364,9 @@ class Player {
             const dy = gameState.selectedTarget.y - this.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
             if (dist <= this.range) {
-                ctx.lineTo(dx, dy);
+                const lineEndX = Math.cos(Math.atan2(dy, dx) - this.angle) * Math.min(dist, 100);
+                const lineEndY = Math.sin(Math.atan2(dy, dx) - this.angle) * Math.min(dist, 100);
+                ctx.lineTo(lineEndX, lineEndY);
                 ctx.stroke();
             }
             ctx.setLineDash([]);
@@ -273,10 +375,10 @@ class Player {
         ctx.restore();
         
         // Barra de vida
-        const barWidth = 40;
-        const barHeight = 4;
-        const barY = this.y - this.size - 15 - gameState.camera.y;
-        const barX = this.x - barWidth / 2 - gameState.camera.x;
+        const barWidth = 50;
+        const barHeight = 5;
+        const barY = screenY - this.size - 20;
+        const barX = screenX - barWidth / 2;
         
         ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
         ctx.fillRect(barX - 1, barY - 1, barWidth + 2, barHeight + 2);
@@ -284,6 +386,15 @@ class Player {
         const healthPercent = this.health / this.maxHealth;
         ctx.fillStyle = healthPercent > 0.5 ? '#00FA9A' : healthPercent > 0.25 ? '#FFD700' : '#FF6B6B';
         ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
+        
+        // Indicador de rango de ataque
+        if (gameState.selectedTarget) {
+            ctx.strokeStyle = 'rgba(0, 250, 154, 0.2)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(screenX, screenY, this.range, 0, Math.PI * 2);
+            ctx.stroke();
+        }
     }
 }
 
@@ -295,14 +406,14 @@ class Enemy {
         this.level = level;
         this.name = enemyNames[Math.floor(Math.random() * enemyNames.length)] + ' Nv.' + level;
         
-        // Stats basados en nivel
-        this.maxHealth = 50 + level * 20;
+        // Stats basados en nivel (daño reducido)
+        this.maxHealth = 30 + level * 15; // Reducido
         this.health = this.maxHealth;
-        this.damage = 10 + level * 5;
-        this.speed = 1 + level * 0.1;
+        this.damage = 5 + level * 2; // Reducido significativamente
+        this.speed = 0.8 + level * 0.08;
         this.size = 15 + level * 0.5;
         this.attackRange = 50;
-        this.attackSpeed = 2000 - level * 50;
+        this.attackSpeed = 2500 - level * 50; // Más lento
         this.lastAttack = 0;
         
         // Tipo de criatura basado en nivel
@@ -363,6 +474,11 @@ class Enemy {
                 gameState.particles.push(new Particle(this.x, this.y, 'death'));
             }
             
+            // Si este era el objetivo seleccionado, limpiar selección
+            if (gameState.selectedTarget === this) {
+                gameState.selectedTarget = null;
+            }
+            
             return false;
         }
         
@@ -397,9 +513,22 @@ class Enemy {
         if (gameState.selectedTarget === this) {
             ctx.strokeStyle = '#FF6B6B';
             ctx.lineWidth = 2;
+            ctx.setLineDash([5, 3]);
             ctx.beginPath();
             ctx.arc(screenX, screenY, this.size + 10, 0, Math.PI * 2);
             ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Marcador de objetivo
+            ctx.fillStyle = '#FF6B6B';
+            for (let i = 0; i < 4; i++) {
+                const angle = (i * Math.PI / 2) + Date.now() * 0.002;
+                const x = screenX + Math.cos(angle) * (this.size + 15);
+                const y = screenY + Math.sin(angle) * (this.size + 15);
+                ctx.beginPath();
+                ctx.arc(x, y, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
         }
         
         // Barra de vida
@@ -420,6 +549,26 @@ class Enemy {
     }
     
     drawCreature() {
+        // Usar sprites si están cargados
+        if (gameState.spritesLoaded && window.GameSprites) {
+            let spriteName = null;
+            switch(this.type) {
+                case 'fish': spriteName = 'fishSmall'; break;
+                case 'jellyfish': spriteName = 'jellyfish'; break;
+                case 'shark': spriteName = 'shark'; break;
+                case 'octopus': spriteName = 'octopus'; break;
+            }
+            
+            const img = window.GameSprites.get(spriteName);
+            if (img) {
+                const scale = this.size / 20;
+                ctx.scale(scale, scale);
+                ctx.drawImage(img, -img.width/2, -img.height/2);
+                return;
+            }
+        }
+        
+        // Dibujo manual si no hay sprites
         switch(this.type) {
             case 'fish':
                 this.drawFish();
@@ -589,8 +738,8 @@ class Projectile {
         const dy = targetY - y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        this.vx = (dx / distance) * 8;
-        this.vy = (dy / distance) * 8;
+        this.vx = (dx / distance) * 10;
+        this.vy = (dy / distance) * 10;
         this.angle = Math.atan2(dy, dx);
         this.lifetime = 100;
         this.trail = [];
@@ -699,6 +848,12 @@ class Particle {
                 this.size = Math.random() * 4 + 2;
                 this.color = 'rgba(255, 200, 100, 0.7)';
                 break;
+            case 'selection':
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.size = Math.random() * 3 + 2;
+                this.color = 'rgba(0, 250, 154, 0.8)';
+                break;
         }
     }
     
@@ -787,6 +942,12 @@ class Gem {
         const screenX = this.x - gameState.camera.x;
         const screenY = this.y - gameState.camera.y;
         
+        // Solo dibujar si está en pantalla
+        if (screenX < -50 || screenX > canvas.width + 50 || 
+            screenY < -50 || screenY > canvas.height + 50) {
+            return;
+        }
+        
         ctx.save();
         ctx.translate(screenX, screenY);
         ctx.rotate(this.angle);
@@ -829,44 +990,47 @@ class Gem {
     }
 }
 
-// Generador de enemigos con mapa infinito
+// Generador de enemigos con mapa infinito mejorado
 function spawnEnemies() {
-    const targetEnemyCount = 20;
-    const spawnRadius = 800;
+    const targetEnemyCount = 15;
+    const spawnRadius = 600;
+    const minSpawnDistance = 200;
     
     while (gameState.enemies.length < targetEnemyCount) {
         // Generar enemigos alrededor del jugador pero no muy cerca
         const angle = Math.random() * Math.PI * 2;
-        const distance = spawnRadius * 0.7 + Math.random() * spawnRadius * 0.3;
+        const distance = minSpawnDistance + Math.random() * (spawnRadius - minSpawnDistance);
         
         const x = gameState.player.x + Math.cos(angle) * distance;
         const y = gameState.player.y + Math.sin(angle) * distance;
         
-        // Nivel basado en la distancia del origen
-        const distFromOrigin = Math.sqrt(x * x + y * y);
-        const baseLevel = Math.floor(distFromOrigin / 500) + 1;
-        const level = Math.max(1, baseLevel + Math.floor(Math.random() * 5 - 2));
+        // Nivel basado en la distancia del origen (mapa infinito con dificultad progresiva)
+        const distFromOrigin = Math.sqrt(gameState.player.x * gameState.player.x + gameState.player.y * gameState.player.y);
+        const baseLevel = Math.floor(distFromOrigin / 1000) + 1;
+        const level = Math.max(1, Math.min(20, baseLevel + Math.floor(Math.random() * 3 - 1)));
         
-        const enemy = new Enemy(x, y, Math.min(level, 20));
+        const enemy = new Enemy(x, y, level);
         gameState.enemies.push(enemy);
     }
     
-    // Eliminar enemigos muy lejos
+    // Eliminar enemigos muy lejos para optimizar rendimiento
     gameState.enemies = gameState.enemies.filter(enemy => {
         const dx = enemy.x - gameState.player.x;
         const dy = enemy.y - gameState.player.y;
-        return Math.sqrt(dx * dx + dy * dy) < spawnRadius * 1.5;
+        return Math.sqrt(dx * dx + dy * dy) < spawnRadius * 2;
     });
 }
 
 // Inicializar burbujas del fondo
 function initBubbles() {
-    for (let i = 0; i < 15; i++) {
-        gameState.bubbles.push(new Bubble());
+    for (let i = 0; i < 20; i++) {
+        const bubble = new Bubble();
+        bubble.y = Math.random() * canvas.height;
+        gameState.bubbles.push(bubble);
     }
 }
 
-// Dibujar fondo oceánico
+// Dibujar fondo oceánico mejorado
 function drawOceanBackground() {
     // Gradiente de profundidad
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
@@ -878,13 +1042,35 @@ function drawOceanBackground() {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
+    // Patrón de cuadrícula para mostrar movimiento (mapa infinito)
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.lineWidth = 1;
+    const gridSize = 100;
+    const offsetX = -gameState.camera.x % gridSize;
+    const offsetY = -gameState.camera.y % gridSize;
+    
+    for (let x = offsetX; x < canvas.width; x += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+    }
+    
+    for (let y = offsetY; y < canvas.height; y += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+    }
+    
     // Rayos de luz solar bajo el agua
     ctx.save();
     ctx.globalAlpha = 0.1;
     ctx.fillStyle = '#FFFFCC';
     
     for (let i = 0; i < 5; i++) {
-        const x = (i * 250 + Date.now() * 0.01) % (canvas.width + 200) - 100;
+        const baseX = i * 250 - gameState.camera.x * 0.1;
+        const x = (baseX + Date.now() * 0.01) % (canvas.width + 200) - 100;
         ctx.beginPath();
         ctx.moveTo(x, 0);
         ctx.lineTo(x - 50, canvas.height);
@@ -924,6 +1110,20 @@ function drawOceanBackground() {
 }
 
 // Event Listeners
+document.addEventListener('keydown', (e) => {
+    gameState.keys[e.key] = true;
+    
+    // Barra espaciadora para seleccionar objetivo
+    if (e.key === ' ') {
+        e.preventDefault();
+        gameState.player.selectTarget();
+    }
+});
+
+document.addEventListener('keyup', (e) => {
+    gameState.keys[e.key] = false;
+});
+
 canvas.addEventListener('mousemove', (e) => {
     const rect = canvas.getBoundingClientRect();
     gameState.mouse.x = e.clientX - rect.left;
@@ -931,26 +1131,33 @@ canvas.addEventListener('mousemove', (e) => {
 });
 
 canvas.addEventListener('click', (e) => {
+    // Click para seleccionar enemigo específico
     const rect = canvas.getBoundingClientRect();
     const clickX = e.clientX - rect.left + gameState.camera.x;
     const clickY = e.clientY - rect.top + gameState.camera.y;
     
     // Buscar enemigo más cercano al click
     let closestEnemy = null;
-    let closestDistance = Infinity;
+    let closestDistance = 30; // Radio de click
     
     for (let enemy of gameState.enemies) {
         const dx = enemy.x - clickX;
         const dy = enemy.y - clickY;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        if (distance < enemy.size + 20 && distance < closestDistance) {
+        if (distance < closestDistance) {
             closestEnemy = enemy;
             closestDistance = distance;
         }
     }
     
-    gameState.selectedTarget = closestEnemy;
+    if (closestEnemy) {
+        gameState.selectedTarget = closestEnemy;
+        // Efecto visual de selección
+        for (let i = 0; i < 5; i++) {
+            gameState.particles.push(new Particle(closestEnemy.x, closestEnemy.y, 'selection'));
+        }
+    }
 });
 
 // Función para elegir mejora
@@ -965,6 +1172,7 @@ function chooseUpgrade(type) {
             break;
         case 'weapon':
             player.upgrades.weapon++;
+            player.damage += 5; // Aumentar daño base también
             break;
         case 'speed':
             player.upgrades.speed++;
@@ -1022,11 +1230,26 @@ function render() {
     // Dibujar jugador
     gameState.player.draw();
     
-    // Indicador de posición en el mapa infinito
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    // UI - Indicadores en pantalla
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(10, canvas.height - 30, 200, 20);
+    
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.font = '12px Arial';
     ctx.textAlign = 'left';
-    ctx.fillText(`Profundidad: ${Math.floor(Math.sqrt(gameState.player.x * gameState.player.x + gameState.player.y * gameState.player.y) / 10)}m`, 10, canvas.height - 10);
+    const depth = Math.floor(Math.sqrt(gameState.player.x * gameState.player.x + gameState.player.y * gameState.player.y) / 10);
+    ctx.fillText(`Profundidad: ${depth}m`, 15, canvas.height - 15);
+    
+    // Indicador de objetivo seleccionado
+    if (gameState.selectedTarget) {
+        ctx.fillText(`Objetivo: ${gameState.selectedTarget.name}`, 15, canvas.height - 35);
+    }
+    
+    // Controles
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.font = '10px Arial';
+    ctx.textAlign = 'right';
+    ctx.fillText('WASD: Mover | ESPACIO: Seleccionar objetivo | Click: Selección manual', canvas.width - 10, canvas.height - 10);
 }
 
 // Bucle principal del juego
@@ -1038,15 +1261,35 @@ function gameLoop() {
 
 // Inicialización del juego
 function init() {
+    // Inicializar jugador en el origen
     gameState.player = new Player(0, 0);
     gameState.player.updateUI();
+    
+    // Inicializar burbujas
     initBubbles();
+    
+    // Generar enemigos iniciales
     spawnEnemies();
+    
+    // Cargar sprites si están disponibles
+    if (window.GameSprites) {
+        window.GameSprites.loadSprites().then(() => {
+            gameState.spritesLoaded = true;
+            console.log('Sprites cargados correctamente');
+        });
+    }
+    
+    // Iniciar bucle del juego
     gameLoop();
 }
 
 // Exponer función globalmente
 window.chooseUpgrade = chooseUpgrade;
 
-// Iniciar el juego
-init();
+// Esperar a que se cargue el DOM y los scripts
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    // Dar tiempo para que se cargue el script de sprites
+    setTimeout(init, 100);
+}
