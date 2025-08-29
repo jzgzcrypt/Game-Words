@@ -17,6 +17,11 @@ const evolutionScript = document.createElement('script');
 evolutionScript.src = 'assets/ship-evolution.js';
 document.head.appendChild(evolutionScript);
 
+// Incluir sprites realistas de alta calidad
+const realisticScript = document.createElement('script');
+realisticScript.src = 'assets/realistic-sprites.js';
+document.head.appendChild(realisticScript);
+
 // Variables del juego
 let gameState = {
     player: null,
@@ -308,11 +313,47 @@ class Player {
         const screenX = this.x - gameState.camera.x;
         const screenY = this.y - gameState.camera.y;
         
+        // Usar sprites realistas si están disponibles
+        if (gameState.realisticSpritesLoaded && window.RealisticSprites) {
+            const effects = {
+                damaged: this.health < this.maxHealth * 0.5,
+                powered: this.level > 10,
+                powerColor: this.level > 15 ? '#FFD700' : '#00FFFF',
+                shield: this.shieldVisual && this.shieldVisual.color,
+                shieldColor: this.shieldVisual ? this.shieldVisual.color : '#00FFFF'
+            };
+            
+            window.RealisticSprites.drawSprite(
+                ctx, 
+                'playerSubmarine', 
+                screenX, 
+                screenY, 
+                this.angle, 
+                1 + (this.level * 0.02), // Escala según nivel
+                effects
+            );
+            
+            // Animar hélices
+            window.RealisticSprites.animatePropeller(
+                ctx,
+                screenX - Math.cos(this.angle) * 45,
+                screenY - Math.sin(this.angle) * 45,
+                this.angle,
+                0.3 + this.speed * 0.05
+            );
+            
+            // No dibujar más si usamos sprites realistas
+            ctx.restore();
+            this.drawHealthBar(screenX, screenY);
+            this.drawTargetIndicator();
+            return;
+        }
+        
         ctx.save();
         ctx.translate(screenX, screenY);
         ctx.rotate(this.angle);
         
-        // Si los sprites están cargados, usar la imagen
+        // Si los sprites normales están cargados, usar la imagen
         if (gameState.spritesLoaded && window.GameSprites && window.GameSprites.get('playerSub')) {
             const img = window.GameSprites.get('playerSub');
             ctx.drawImage(img, -img.width/2, -img.height/2);
@@ -412,6 +453,11 @@ class Player {
         
         ctx.restore();
         
+        this.drawHealthBar(screenX, screenY);
+        this.drawTargetIndicator();
+    }
+    
+    drawHealthBar(screenX, screenY) {
         // Barra de vida
         const barWidth = 50;
         const barHeight = 5;
@@ -424,6 +470,11 @@ class Player {
         const healthPercent = this.health / this.maxHealth;
         ctx.fillStyle = healthPercent > 0.5 ? '#00FA9A' : healthPercent > 0.25 ? '#FFD700' : '#FF6B6B';
         ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
+    }
+    
+    drawTargetIndicator() {
+        const screenX = this.x - gameState.camera.x;
+        const screenY = this.y - gameState.camera.y;
         
         // Indicador de rango de ataque
         if (gameState.selectedTarget) {
@@ -587,7 +638,50 @@ class Enemy {
     }
     
     drawCreature() {
-        // Usar sprites si están cargados
+        // Usar sprites realistas si están disponibles
+        if (gameState.realisticSpritesLoaded && window.RealisticSprites) {
+            let spriteName = null;
+            const effects = {
+                damaged: this.health < this.maxHealth * 0.5,
+                opacity: gameState.selectedTarget === this ? 1 : 0.9
+            };
+            
+            switch(this.type) {
+                case 'fish': 
+                    spriteName = 'fishEnemy';
+                    effects.powerColor = '#FF6B6B';
+                    break;
+                case 'jellyfish': 
+                    spriteName = 'jellyfishEnemy';
+                    effects.powered = true;
+                    effects.powerColor = '#E91E63';
+                    break;
+                case 'shark': 
+                    spriteName = 'fishEnemy'; // Usar fish por ahora
+                    effects.powerColor = '#495057';
+                    break;
+                case 'octopus': 
+                    spriteName = 'jellyfishEnemy'; // Usar jellyfish por ahora
+                    effects.powered = true;
+                    effects.powerColor = '#9C27B0';
+                    break;
+            }
+            
+            if (spriteName) {
+                const scale = 0.5 + (this.level * 0.02);
+                window.RealisticSprites.drawSprite(
+                    ctx,
+                    spriteName,
+                    0, 0,
+                    0,
+                    scale,
+                    effects
+                );
+                return;
+            }
+        }
+        
+        // Usar sprites normales si están cargados
         if (gameState.spritesLoaded && window.GameSprites) {
             let spriteName = null;
             switch(this.type) {
@@ -1656,6 +1750,14 @@ function init() {
         window.GameSprites.loadSprites().then(() => {
             gameState.spritesLoaded = true;
             console.log('Sprites cargados correctamente');
+        });
+    }
+    
+    // Cargar sprites realistas de alta calidad
+    if (window.RealisticSprites) {
+        window.RealisticSprites.loadAllSprites().then(() => {
+            gameState.realisticSpritesLoaded = true;
+            console.log('Sprites realistas HD cargados');
         });
     }
     
