@@ -2,7 +2,7 @@
 const OceanEffects = {
     // Configuración de rendimiento
     enabled: true,
-    quality: 'medium', // 'low', 'medium', 'high'
+    quality: 'low', // Por defecto en low para máximo rendimiento
     frameSkip: 0,
     frameCounter: 0,
     
@@ -88,16 +88,41 @@ const OceanEffects = {
         }
     },
     
-    // Dibujar fondo oceánico según bioma
+    // Utilidad para oscurecer colores
+    darkenColor: function(color, factor) {
+        // Simple darkening for hex colors
+        if (color.startsWith('#')) {
+            const num = parseInt(color.slice(1), 16);
+            const r = Math.floor((num >> 16) * factor);
+            const g = Math.floor(((num >> 8) & 0x00FF) * factor);
+            const b = Math.floor((num & 0x0000FF) * factor);
+            return `rgb(${r},${g},${b})`;
+        }
+        return color;
+    },
+    
+    // Dibujar fondo oceánico según bioma (SIMPLIFICADO)
     drawOceanBackground: function(ctx, biome, camera) {
         const canvas = ctx.canvas;
         
-        // Limpiar con color base del bioma
-        ctx.fillStyle = biome.color || '#006994';
+        // Solo un gradiente simple para el fondo
+        const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        const baseColor = biome.color || '#006994';
+        
+        // Gradiente más simple
+        bgGradient.addColorStop(0, baseColor);
+        bgGradient.addColorStop(1, this.darkenColor(baseColor, 0.5));
+        
+        ctx.fillStyle = bgGradient;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Gradiente de profundidad mejorado
-        const gradient = ctx.createRadialGradient(
+        // RETORNAR TEMPRANO SI CALIDAD BAJA
+        if (this.quality === 'low') {
+            return;
+        }
+        
+        // Gradiente de profundidad mejorado (solo en calidad media/alta)
+        const depthGradient = ctx.createRadialGradient(
             canvas.width/2, -200, 100,
             canvas.width/2, canvas.height, canvas.width
         );

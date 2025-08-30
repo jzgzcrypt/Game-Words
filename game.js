@@ -67,6 +67,11 @@ const oceanEffectsScript = document.createElement('script');
 oceanEffectsScript.src = 'assets/ocean-effects.js';
 document.head.appendChild(oceanEffectsScript);
 
+// Incluir elementos de biomas
+const biomeElementsScript = document.createElement('script');
+biomeElementsScript.src = 'assets/biome-elements.js';
+document.head.appendChild(biomeElementsScript);
+
 // Variables del juego
 let gameState = {
     player: null,
@@ -2000,17 +2005,35 @@ function update() {
 function render() {
     // Obtener bioma actual
     let currentBiome = { name: 'Aguas Poco Profundas', color: '#006994' };
+    let biomeName = 'shallows';
     if (window.BiomeSystem && gameState.player) {
         currentBiome = window.BiomeSystem.getCurrentBiome(gameState.player.x, gameState.player.y);
+        // Mapear nombre del bioma
+        if (currentBiome.name.includes('Arrecife')) biomeName = 'reef';
+        else if (currentBiome.name.includes('Kelp')) biomeName = 'kelp';
+        else if (currentBiome.name.includes('Abisal')) biomeName = 'abyss';
+        else if (currentBiome.name.includes('Volcánica')) biomeName = 'volcanic';
+        else if (currentBiome.name.includes('Marianas')) biomeName = 'trench';
     }
     
-    // Dibujar fondo oceánico mejorado con efectos
+    // Dibujar fondo oceánico simplificado
     if (window.OceanEffects) {
         window.OceanEffects.drawOceanBackground(ctx, currentBiome, gameState.camera);
-    } else if (window.BiomeSystem) {
-        window.BiomeSystem.drawBiomeBackground(ctx, gameState.camera, gameState.player);
     } else {
-        drawOceanBackground();
+        // Fallback simple
+        ctx.fillStyle = currentBiome.color || '#006994';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    
+    // Dibujar elementos específicos del bioma
+    if (window.BiomeElements) {
+        // Cambiar bioma si es necesario
+        if (!window.BiomeElements.currentBiome || 
+            window.BiomeElements.currentBiome.name !== currentBiome.name) {
+            window.BiomeElements.changeBiome(biomeName);
+        }
+        // Dibujar elementos
+        window.BiomeElements.drawBiomeElements(ctx, gameState.camera, Date.now() * 0.001);
     }
     
     // Dibujar estaciones de comercio (detrás de todo)
