@@ -91,6 +91,13 @@ let gameState = {
         totalDamageDealt: 0,
         totalDistanceTraveled: 0,
         bossesDefeated: []
+    },
+    // Sistema de FPS
+    fps: {
+        current: 60,
+        frames: 0,
+        lastTime: performance.now(),
+        lastFpsUpdate: 0
     }
 };
 
@@ -2067,8 +2074,34 @@ function render() {
 
 // Bucle principal del juego
 function gameLoop() {
+    // Calcular FPS
+    const now = performance.now();
+    const delta = now - gameState.fps.lastTime;
+    gameState.fps.lastTime = now;
+    gameState.fps.frames++;
+    
+    // Actualizar FPS cada segundo
+    if (now - gameState.fps.lastFpsUpdate >= 1000) {
+        gameState.fps.current = gameState.fps.frames;
+        gameState.fps.frames = 0;
+        gameState.fps.lastFpsUpdate = now;
+        
+        // Auto-ajustar calidad de efectos según FPS
+        if (window.OceanEffects) {
+            window.OceanEffects.autoAdjustQuality(gameState.fps.current);
+        }
+    }
+    
     update();
     render();
+    
+    // Mostrar FPS en pantalla (opcional)
+    if (gameState.fps.current < 45) {
+        ctx.fillStyle = gameState.fps.current < 30 ? '#FF0000' : '#FFFF00';
+        ctx.font = '12px Arial';
+        ctx.fillText(`FPS: ${gameState.fps.current}`, 10, 20);
+    }
+    
     requestAnimationFrame(gameLoop);
 }
 

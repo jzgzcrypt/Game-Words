@@ -1,5 +1,11 @@
-// Sistema de Efectos Oceánicos Avanzados
+// Sistema de Efectos Oceánicos Optimizado
 const OceanEffects = {
+    // Configuración de rendimiento
+    enabled: true,
+    quality: 'medium', // 'low', 'medium', 'high'
+    frameSkip: 0,
+    frameCounter: 0,
+    
     // Inicialización
     init: function() {
         this.time = 0;
@@ -9,55 +15,77 @@ const OceanEffects = {
         this.particles = [];
         this.fogDensity = 0.1;
         
-        // Crear rayos de luz
-        for (let i = 0; i < 5; i++) {
+        // Ajustar cantidad según calidad
+        const rayCount = this.quality === 'high' ? 5 : this.quality === 'medium' ? 3 : 2;
+        const particleCount = this.quality === 'high' ? 30 : this.quality === 'medium' ? 15 : 8;
+        
+        // Crear rayos de luz (reducidos)
+        for (let i = 0; i < rayCount; i++) {
             this.lightRays.push({
                 x: Math.random() * 1000,
                 width: 50 + Math.random() * 100,
-                opacity: 0.1 + Math.random() * 0.2,
-                speed: 0.5 + Math.random() * 0.5,
+                opacity: 0.05 + Math.random() * 0.1, // Reducida opacidad
+                speed: 0.3 + Math.random() * 0.3, // Reducida velocidad
                 angle: -0.3 + Math.random() * 0.6
             });
         }
         
-        // Crear partículas ambientales
-        for (let i = 0; i < 50; i++) {
+        // Crear partículas ambientales (reducidas)
+        for (let i = 0; i < particleCount; i++) {
             this.particles.push({
                 x: Math.random() * 1920,
                 y: Math.random() * 1080,
-                size: 1 + Math.random() * 3,
-                speedX: -0.5 + Math.random(),
-                speedY: -0.2 - Math.random() * 0.5,
-                opacity: 0.3 + Math.random() * 0.4,
+                size: 1 + Math.random() * 2,
+                speedX: -0.3 + Math.random() * 0.6,
+                speedY: -0.1 - Math.random() * 0.3,
+                opacity: 0.2 + Math.random() * 0.3,
                 type: Math.random() > 0.7 ? 'plankton' : 'debris'
             });
         }
     },
     
-    // Actualizar efectos
+    // Actualizar efectos (optimizado con frame skipping)
     update: function() {
+        if (!this.enabled) return;
+        
+        // Frame skipping para mejorar rendimiento
+        this.frameCounter++;
+        if (this.frameCounter % 2 !== 0 && this.quality !== 'high') {
+            return; // Saltar frames en calidad media/baja
+        }
+        
         this.time += 0.016; // ~60fps
         this.waveOffset += this.currentStrength;
         
-        // Actualizar rayos de luz
-        this.lightRays.forEach(ray => {
-            ray.x += ray.speed;
-            if (ray.x > 1920) ray.x = -ray.width;
-        });
+        // Actualizar rayos de luz (menos frecuente)
+        if (this.frameCounter % 3 === 0) {
+            this.lightRays.forEach(ray => {
+                ray.x += ray.speed;
+                if (ray.x > 1920) ray.x = -ray.width;
+            });
+        }
         
-        // Actualizar partículas
-        this.particles.forEach(particle => {
-            particle.x += particle.speedX + Math.sin(this.time + particle.y * 0.01) * 0.3;
-            particle.y += particle.speedY;
-            
-            // Reiniciar partículas que salen de pantalla
-            if (particle.y < -10) {
-                particle.y = 1090;
-                particle.x = Math.random() * 1920;
-            }
-            if (particle.x < -10) particle.x = 1930;
-            if (particle.x > 1930) particle.x = -10;
-        });
+        // Actualizar partículas (optimizado)
+        if (this.frameCounter % 2 === 0) {
+            const sinTime = Math.sin(this.time);
+            this.particles.forEach(particle => {
+                particle.x += particle.speedX;
+                particle.y += particle.speedY;
+                
+                // Movimiento ondulante simplificado
+                if (this.quality === 'high') {
+                    particle.x += sinTime * 0.2;
+                }
+                
+                // Reiniciar partículas que salen de pantalla
+                if (particle.y < -10) {
+                    particle.y = 1090;
+                    particle.x = Math.random() * 1920;
+                }
+                if (particle.x < -10) particle.x = 1930;
+                if (particle.x > 1930) particle.x = -10;
+            });
+        }
     },
     
     // Dibujar fondo oceánico según bioma
@@ -123,26 +151,32 @@ const OceanEffects = {
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Efectos específicos por bioma
-        if (biome.name === 'Aguas Poco Profundas' || biome.name === 'Arrecife de Coral') {
-            this.drawLightRays(ctx, biome);
+        // Efectos específicos por bioma (con control de calidad)
+        if (this.quality !== 'low') {
+            if (biome.name === 'Aguas Poco Profundas' || biome.name === 'Arrecife de Coral') {
+                this.drawLightRays(ctx, biome);
+            }
+            
+            if (biome.name === 'Bosque de Kelp') {
+                this.drawKelpShadows(ctx, camera);
+            }
+            
+            if (biome.name === 'Zona Volcánica') {
+                this.drawVolcanicBubbles(ctx, camera);
+            }
         }
         
-        if (biome.name === 'Bosque de Kelp') {
-            this.drawKelpShadows(ctx, camera);
+        // Partículas ambientales (solo cada 2 frames)
+        if (this.frameCounter % 2 === 0) {
+            this.drawAmbientParticles(ctx, biome);
         }
         
-        if (biome.name === 'Zona Volcánica') {
-            this.drawVolcanicBubbles(ctx, camera);
+        // Corrientes de agua (solo cada 3 frames)
+        if (this.frameCounter % 3 === 0) {
+            this.drawWaterCurrents(ctx, camera);
         }
         
-        // Partículas ambientales
-        this.drawAmbientParticles(ctx, biome);
-        
-        // Corrientes de agua
-        this.drawWaterCurrents(ctx, camera);
-        
-        // Niebla de profundidad
+        // Niebla de profundidad (siempre, es importante)
         this.drawDepthFog(ctx, biome);
     },
     
@@ -263,22 +297,26 @@ const OceanEffects = {
         ctx.restore();
     },
     
-    // Corrientes de agua
+    // Corrientes de agua (optimizado)
     drawWaterCurrents: function(ctx, camera) {
-        ctx.save();
-        ctx.globalAlpha = 0.05;
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 2;
+        if (this.quality === 'low') return; // Saltar en calidad baja
         
-        for (let i = 0; i < 5; i++) {
-            const y = ctx.canvas.height * (0.2 + i * 0.2);
-            const offset = Math.sin(this.time + i) * 30;
+        ctx.save();
+        ctx.globalAlpha = 0.03; // Reducida opacidad
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 1; // Línea más delgada
+        
+        const currents = this.quality === 'high' ? 3 : 2; // Menos corrientes
+        for (let i = 0; i < currents; i++) {
+            const y = ctx.canvas.height * (0.3 + i * 0.3);
+            const offset = Math.sin(this.time + i) * 20;
             
             ctx.beginPath();
             ctx.moveTo(0, y + offset);
             
-            for (let x = 0; x <= ctx.canvas.width; x += 50) {
-                const wave = Math.sin(x * 0.01 + this.time * 2) * 15;
+            // Menos puntos para la curva
+            for (let x = 0; x <= ctx.canvas.width; x += 100) {
+                const wave = Math.sin(x * 0.01 + this.time) * 10;
                 ctx.lineTo(x, y + offset + wave);
             }
             
@@ -309,27 +347,38 @@ const OceanEffects = {
         }
     },
     
-    // Efecto de distorsión del agua
+    // Efecto de distorsión del agua (deshabilitado por rendimiento)
     drawWaterDistortion: function(ctx) {
-        // Este efecto se aplicaría con un shader en WebGL, 
-        // aquí simulamos con transparencias
-        ctx.save();
-        ctx.globalAlpha = 0.02;
-        
-        for (let i = 0; i < 3; i++) {
-            ctx.save();
-            ctx.translate(ctx.canvas.width/2, ctx.canvas.height/2);
-            ctx.scale(
-                1 + Math.sin(this.time * 2 + i) * 0.01,
-                1 + Math.cos(this.time * 2 + i) * 0.01
-            );
-            ctx.translate(-ctx.canvas.width/2, -ctx.canvas.height/2);
-            
-            // Aquí se redibujaría el contenido con distorsión
-            ctx.restore();
+        // Deshabilitado para mejorar rendimiento
+        return;
+    },
+    
+    // Ajustar calidad dinámicamente
+    setQuality: function(quality) {
+        if (['low', 'medium', 'high'].includes(quality)) {
+            this.quality = quality;
+            this.particles = []; // Limpiar partículas
+            this.lightRays = []; // Limpiar rayos
+            this.init(); // Reinicializar con nueva calidad
+            console.log('Calidad de efectos oceánicos ajustada a:', quality);
         }
-        
-        ctx.restore();
+    },
+    
+    // Auto-ajustar calidad según FPS
+    autoAdjustQuality: function(fps) {
+        if (fps < 30 && this.quality !== 'low') {
+            this.setQuality('low');
+        } else if (fps >= 30 && fps < 50 && this.quality !== 'medium') {
+            this.setQuality('medium');
+        } else if (fps >= 50 && this.quality === 'low') {
+            this.setQuality('medium');
+        }
+    },
+    
+    // Desactivar/activar efectos
+    toggle: function() {
+        this.enabled = !this.enabled;
+        return this.enabled;
     }
 };
 
