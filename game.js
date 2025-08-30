@@ -62,6 +62,11 @@ const merchantTavernScript = document.createElement('script');
 merchantTavernScript.src = 'assets/merchant-tavern.js';
 document.head.appendChild(merchantTavernScript);
 
+// Incluir efectos oceánicos
+const oceanEffectsScript = document.createElement('script');
+oceanEffectsScript.src = 'assets/ocean-effects.js';
+document.head.appendChild(oceanEffectsScript);
+
 // Variables del juego
 let gameState = {
     player: null,
@@ -1925,6 +1930,11 @@ function chooseUpgrade(type) {
 function update() {
     if (!gameState.gameRunning) return;
     
+    // Actualizar efectos oceánicos
+    if (window.OceanEffects) {
+        window.OceanEffects.update();
+    }
+    
     // Actualizar jugador
     gameState.player.update();
     
@@ -1981,8 +1991,16 @@ function update() {
 
 // Función de renderizado
 function render() {
-    // Dibujar fondo oceánico con biomas
-    if (window.BiomeSystem) {
+    // Obtener bioma actual
+    let currentBiome = { name: 'Aguas Poco Profundas', color: '#006994' };
+    if (window.BiomeSystem && gameState.player) {
+        currentBiome = window.BiomeSystem.getCurrentBiome(gameState.player.x, gameState.player.y);
+    }
+    
+    // Dibujar fondo oceánico mejorado con efectos
+    if (window.OceanEffects) {
+        window.OceanEffects.drawOceanBackground(ctx, currentBiome, gameState.camera);
+    } else if (window.BiomeSystem) {
         window.BiomeSystem.drawBiomeBackground(ctx, gameState.camera, gameState.player);
     } else {
         drawOceanBackground();
@@ -2062,6 +2080,12 @@ function init() {
     
     // Inicializar burbujas
     initBubbles();
+    
+    // Inicializar efectos oceánicos
+    if (window.OceanEffects) {
+        window.OceanEffects.init();
+        console.log('Efectos oceánicos inicializados');
+    }
     
     // Generar enemigos iniciales
     spawnEnemies();

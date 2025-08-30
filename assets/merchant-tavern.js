@@ -195,22 +195,35 @@ const MerchantTavern = {
             this.tavernImage.src = `data:image/svg+xml;base64,${encoded}`;
         }
         
-        // Dibujar la taberna
+        // Movimiento flotante con las corrientes
+        const time = Date.now() * 0.001;
+        const floatY = Math.sin(time * 0.8) * 5;
+        const floatX = Math.cos(time * 0.6) * 3;
+        const rotation = Math.sin(time * 0.4) * 0.05; // Balanceo suave
+        
+        ctx.translate(floatX, floatY);
+        ctx.rotate(rotation);
+        
+        // Dibujar la estación
         if (this.tavernImage.complete) {
             // Escalar según el tamaño de la estación
             const scale = station.size / 50;
             ctx.scale(scale, scale);
             
+            // Efecto de respiración/pulsación
+            const breathe = 1 + Math.sin(time * 2) * 0.02;
+            ctx.scale(breathe, breathe);
+            
             // Dibujar la imagen centrada
             ctx.drawImage(this.tavernImage, -150, -100, 300, 200);
         } else {
             // Fallback mientras carga
-            ctx.fillStyle = '#8D6E63';
+            ctx.fillStyle = '#546E7A';
             ctx.fillRect(-station.size, -station.size/2, station.size*2, station.size);
-            ctx.fillStyle = '#FFEB3B';
+            ctx.fillStyle = '#00E5FF';
             ctx.font = '12px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('MERCADER', 0, 0);
+            ctx.fillText('ESTACIÓN', 0, 0);
         }
         
         // Indicador de distancia
