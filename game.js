@@ -1905,11 +1905,9 @@ document.addEventListener('keydown', (e) => {
         }
     }
     
-    // G para abrir panel de gráficos
+    // G para abrir panel de gráficos (deshabilitado temporalmente)
     if (e.key.toLowerCase() === 'g') {
-        if (window.GraphicsPanel) {
-            window.GraphicsPanel.toggle();
-        }
+        console.log('Panel de gráficos no disponible en esta versión');
     }
     
     // Q para abrir panel de misiones
@@ -2325,6 +2323,50 @@ function init() {
     
     // Iniciar bucle del juego
     gameLoop();
+}
+
+// Funciones de actualización del sistema
+function updateParticles() {
+    if (!gameState.particles) return;
+    
+    // Limitar partículas para rendimiento
+    if (gameState.particles.length > 200) {
+        gameState.particles = gameState.particles.slice(-150);
+    }
+    
+    // Actualizar y filtrar partículas
+    gameState.particles = gameState.particles.filter(particle => {
+        if (particle && particle.update) {
+            return particle.update();
+        }
+        return false;
+    });
+}
+
+function updateBubbles() {
+    if (!gameState.bubbles) return;
+    
+    // Limitar burbujas para rendimiento
+    if (gameState.bubbles.length > 100) {
+        gameState.bubbles = gameState.bubbles.slice(-80);
+    }
+    
+    // Actualizar burbujas
+    gameState.bubbles.forEach(bubble => {
+        if (bubble && bubble.update) {
+            bubble.update();
+        }
+    });
+}
+
+// Función para inicializar burbujas
+function initBubbles() {
+    gameState.bubbles = [];
+    
+    // Crear burbujas iniciales
+    for (let i = 0; i < 50; i++) {
+        gameState.bubbles.push(new Bubble());
+    }
 }
 
 // Exponer función globalmente

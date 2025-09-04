@@ -73,7 +73,7 @@ const BoostIntegration = {
     // Aplicar multiplicador de gemas
     applyGemMultiplier: function() {
         const boost = this.state.activeBoosts.gemMultiplier;
-        if (!boost || !boost.multiplier) return;
+        if (!boost || !boost.multiplier || !gameState.player) return;
         
         // Interceptar la función de recolección de gemas
         if (!this.originalCollectGem) {
@@ -123,7 +123,7 @@ const BoostIntegration = {
     // Aplicar boost de experiencia
     applyExperienceBoost: function() {
         const boost = this.state.activeBoosts.experienceBoost;
-        if (!boost || !boost.multiplier) return;
+        if (!boost || !boost.multiplier || !gameState.player) return;
         
         // Interceptar la función de ganar experiencia
         if (!this.originalGainExperience) {
