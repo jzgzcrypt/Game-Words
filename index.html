@@ -49,58 +49,104 @@
         /* Estilos para dispositivos móviles */
         @media (max-width: 768px) {
             body {
-                padding: 10px;
+                padding: 0;
+                margin: 0;
                 background: linear-gradient(180deg, #006994, #0099CC);
+                overflow: hidden;
+                position: fixed;
+                width: 100%;
+                height: 100%;
             }
             
             #gameContainer {
-                border: 2px solid #00CED1;
-                border-radius: 8px;
-                box-shadow: 0 0 20px rgba(0, 206, 209, 0.4);
+                border: none;
+                border-radius: 0;
+                box-shadow: none;
+                width: 100vw;
+                height: 100vh;
                 max-width: 100vw;
                 max-height: 100vh;
+                position: fixed;
+                top: 0;
+                left: 0;
+                overflow: hidden;
             }
             
             #gameCanvas {
-                max-width: 100%;
-                max-height: 100%;
-                width: auto !important;
-                height: auto !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                max-width: 100vw !important;
+                max-height: 100vh !important;
+                object-fit: cover;
+                display: block;
             }
             
             .upgrade-panel {
                 width: 90%;
-                max-width: 400px;
-                padding: 15px;
+                max-width: 350px;
+                padding: 20px;
+                font-size: 16px;
             }
             
             .upgrade-button {
                 width: 100%;
-                margin: 8px 0;
-                padding: 12px;
-                font-size: 14px;
+                margin: 10px 0;
+                padding: 15px;
+                font-size: 16px;
+                min-height: 50px;
             }
             
             .merchant-panel {
                 width: 95%;
                 min-width: auto;
                 max-width: 90vw;
-                padding: 15px;
+                padding: 20px;
+                font-size: 16px;
+            }
+            
+            /* Ocultar elementos innecesarios en móvil */
+            .desktop-only {
+                display: none !important;
             }
         }
         
-        /* Modo retrato en móvil */
+        /* Modo retrato en móvil - forzar paisaje */
         @media (max-width: 768px) and (orientation: portrait) {
-            #gameContainer {
-                transform: rotate(90deg);
-                transform-origin: center center;
-                width: 100vh;
-                height: 100vw;
+            body::before {
+                content: "🔄 Gira tu dispositivo a modo paisaje para la mejor experiencia";
                 position: fixed;
-                top: 50%;
-                left: 50%;
-                margin-top: -50vw;
-                margin-left: -50vh;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.95);
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                font-size: 18px;
+                font-weight: bold;
+                z-index: 9999;
+                padding: 20px;
+                box-sizing: border-box;
+            }
+            
+            #gameContainer {
+                display: none;
+            }
+        }
+        
+        /* Móvil en modo paisaje - optimizado */
+        @media (max-width: 768px) and (orientation: landscape) {
+            #gameContainer {
+                width: 100vw;
+                height: 100vh;
+            }
+            
+            #gameCanvas {
+                width: 100vw !important;
+                height: 100vh !important;
             }
         }
         
@@ -129,6 +175,49 @@
         
         .mobile-device .mobile-only {
             display: block;
+        }
+        
+        /* Mejoras específicas para móvil */
+        @media (max-width: 768px) {
+            /* Ocultar bordes y sombras innecesarias */
+            #gameContainer {
+                box-shadow: none !important;
+                border: none !important;
+            }
+            
+            /* Asegurar que el canvas ocupe toda la pantalla */
+            #gameCanvas {
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                max-width: none !important;
+                max-height: none !important;
+            }
+            
+            /* Mejorar legibilidad de texto */
+            body {
+                font-size: 16px;
+                line-height: 1.4;
+            }
+            
+            /* Botones más grandes para touch */
+            button, .upgrade-button, .merchant-button {
+                min-height: 48px !important;
+                font-size: 16px !important;
+                padding: 12px 20px !important;
+            }
+        }
+        
+        /* Forzar pantalla completa en móvil */
+        @media (max-width: 768px) {
+            html, body {
+                overflow: hidden !important;
+                position: fixed !important;
+                width: 100% !important;
+                height: 100% !important;
+            }
         }
         
         #gameCanvas {

@@ -29,6 +29,19 @@ const MobileControls = {
         console.log('Sistema de controles móviles inicializando...');
         this.detectMobile();
         this.setupMobileOptimizations();
+        
+        // Esperar a que el DOM esté listo
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                this.initializeMobileComponents();
+            });
+        } else {
+            this.initializeMobileComponents();
+        }
+    },
+    
+    // Inicializar componentes móviles
+    initializeMobileComponents: function() {
         this.createVirtualJoystick();
         this.createTouchButtons();
         this.setupGestureRecognition();
@@ -36,6 +49,9 @@ const MobileControls = {
         this.setupEventListeners();
         this.setupOrientationHandling();
         this.optimizeForMobile();
+        
+        // Ajustar canvas inicial
+        this.adjustCanvasForOrientation();
     },
     
     // Detectar dispositivo móvil
@@ -853,6 +869,41 @@ const MobileControls = {
         if (isPortrait !== this.state.isPortrait) {
             this.state.isPortrait = isPortrait;
             this.adaptToOrientation();
+            
+            // Reajustar canvas cuando cambie orientación
+            this.adjustCanvasForOrientation();
+        }
+    },
+    
+    // Ajustar canvas para la orientación actual
+    adjustCanvasForOrientation: function() {
+        const canvas = document.getElementById('gameCanvas');
+        if (!canvas) return;
+        
+        if (this.state.isPortrait) {
+            // Modo retrato - mostrar mensaje
+            this.showLandscapeMessage();
+            canvas.style.display = 'none';
+        } else {
+            // Modo paisaje - mostrar juego
+            const landscapeMessage = document.getElementById('landscapeMessage');
+            if (landscapeMessage) {
+                landscapeMessage.remove();
+            }
+            
+            canvas.style.display = 'block';
+            canvas.style.width = '100vw';
+            canvas.style.height = '100vh';
+            
+            // Reajustar resolución
+            const devicePixelRatio = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            
+            canvas.width = rect.width * devicePixelRatio;
+            canvas.height = rect.height * devicePixelRatio;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.scale(devicePixelRatio, devicePixelRatio);
         }
     },
     
@@ -861,65 +912,19 @@ const MobileControls = {
         if (this.state.isPortrait) {
             // Modo retrato
             document.body.classList.add('portrait-mode');
-            this.showOrientationWarning();
         } else {
             // Modo paisaje
             document.body.classList.remove('portrait-mode');
-            this.hideOrientationWarning();
         }
     },
     
-    // Mostrar advertencia de orientación
+    // Función placeholder para compatibilidad
     showOrientationWarning: function() {
-        if (document.getElementById('orientationWarning')) return;
-        
-        const warning = document.createElement('div');
-        warning.id = 'orientationWarning';
-        warning.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 3000;
-            color: white;
-            text-align: center;
-            padding: 20px;
-        `;
-        
-        warning.innerHTML = `
-            <div style="font-size: 48px; margin-bottom: 20px;">📱</div>
-            <h2 style="color: #00CED1; margin-bottom: 15px;">Gira tu dispositivo</h2>
-            <p style="margin-bottom: 20px; font-size: 16px;">
-                Para la mejor experiencia de juego, gira tu dispositivo a modo paisaje
-            </p>
-            <div style="font-size: 24px; animation: rotate 2s infinite;">🔄</div>
-        `;
-        
-        // Añadir animación CSS
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes rotate {
-                from { transform: rotate(0deg); }
-                to { transform: rotate(360deg); }
-            }
-        `;
-        document.head.appendChild(style);
-        
-        document.body.appendChild(warning);
+        // Reemplazada por showLandscapeMessage
     },
     
-    // Ocultar advertencia de orientación
     hideOrientationWarning: function() {
-        const warning = document.getElementById('orientationWarning');
-        if (warning) {
-            warning.remove();
-        }
+        // Reemplazada por adjustCanvasForOrientation
     },
     
     // Optimizar para móvil
@@ -934,12 +939,115 @@ const MobileControls = {
         // Ajustar canvas para móvil
         const canvas = document.getElementById('gameCanvas');
         if (canvas) {
+            // Forzar tamaño completo en móvil
+            canvas.style.width = '100vw';
+            canvas.style.height = '100vh';
             canvas.style.maxWidth = '100vw';
             canvas.style.maxHeight = '100vh';
+            canvas.style.objectFit = 'cover';
+            
+            // Ajustar resolución del canvas para mejor rendimiento
+            const devicePixelRatio = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            
+            canvas.width = rect.width * devicePixelRatio;
+            canvas.height = rect.height * devicePixelRatio;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.scale(devicePixelRatio, devicePixelRatio);
         }
         
         // Ajustar paneles para móvil
         this.adaptPanelsForMobile();
+        
+        // Forzar orientación paisaje en móvil
+        this.forceLandscapeOrientation();
+    },
+    
+    // Forzar orientación paisaje en móvil
+    forceLandscapeOrientation: function() {
+        if (!this.state.isMobile) return;
+        
+        // Intentar forzar orientación paisaje
+        if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(() => {
+                console.log('No se pudo forzar orientación paisaje');
+            });
+        }
+        
+        // Mostrar mensaje si está en retrato
+        if (this.state.isPortrait) {
+            this.showLandscapeMessage();
+        }
+    },
+    
+    // Mostrar mensaje para girar a paisaje
+    showLandscapeMessage: function() {
+        if (document.getElementById('landscapeMessage')) return;
+        
+        const message = document.createElement('div');
+        message.id = 'landscapeMessage';
+        message.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            z-index: 9999;
+            font-family: Arial, sans-serif;
+        `;
+        
+        message.innerHTML = `
+            <div style="font-size: 48px; margin-bottom: 20px;">📱</div>
+            <h2 style="color: #00CED1; margin-bottom: 15px; font-size: 24px;">
+                Gira tu dispositivo
+            </h2>
+            <p style="margin-bottom: 20px; font-size: 18px; line-height: 1.5;">
+                Para la mejor experiencia de juego,<br>
+                gira tu dispositivo a modo paisaje
+            </p>
+            <div style="font-size: 32px; animation: rotate 2s infinite;">🔄</div>
+            <p style="margin-top: 20px; font-size: 14px; color: #87CEEB;">
+                El juego se iniciará automáticamente
+            </p>
+        `;
+        
+        // Añadir animación CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes rotate {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        document.body.appendChild(message);
+        
+        // Remover mensaje cuando cambie a paisaje
+        const checkOrientation = () => {
+            if (!this.state.isPortrait) {
+                message.remove();
+                clearInterval(orientationCheck);
+            }
+        };
+        
+        const orientationCheck = setInterval(checkOrientation, 500);
+        
+        // Remover después de 10 segundos como máximo
+        setTimeout(() => {
+            if (message.parentNode) {
+                message.remove();
+                clearInterval(orientationCheck);
+            }
+        }, 10000);
     },
     
     // Adaptar paneles para móvil
