@@ -42,16 +42,29 @@ const MobileControls = {
     
     // Inicializar componentes móviles
     initializeMobileComponents: function() {
+        // Crear controles básicos primero
         this.createVirtualJoystick();
         this.createTouchButtons();
-        this.setupGestureRecognition();
-        this.createMobileUI();
+        
+        // Configurar eventos básicos
         this.setupEventListeners();
+        
+        // Crear UI móvil
+        this.createMobileUI();
+        
+        // Configurar orientación
         this.setupOrientationHandling();
+        
+        // Optimizaciones ligeras
         this.optimizeForMobile();
         
-        // Ajustar canvas inicial
+        // Ajustar canvas inicial (solo estilos CSS)
         this.adjustCanvasForOrientation();
+        
+        // Deshabilitar temporalmente gestos para evitar conflictos
+        // this.setupGestureRecognition();
+        
+        console.log('Componentes móviles inicializados correctamente');
     },
     
     // Detectar dispositivo móvil
@@ -808,7 +821,7 @@ const MobileControls = {
                 if (gameState.fps.current < 30) {
                     fpsIndicator.style.color = '#FF6B6B';
                 } else if (gameState.fps.current < 45) {
-                    fpsIndicator.style.color = '#FFD93D';
+                    fpsIndicator.textContent = '#FFD93D';
                 } else {
                     fpsIndicator.style.color = '#00FA9A';
                 }
@@ -822,8 +835,7 @@ const MobileControls = {
             depthIndicator.textContent = `Profundidad: ${depth}m`;
         }
         
-        // Actualizar cada frame
-        requestAnimationFrame(() => this.updateMobileIndicators());
+        // NO usar requestAnimationFrame aquí - solo actualizar cuando se llame
     },
     
     // Configurar event listeners
@@ -895,15 +907,8 @@ const MobileControls = {
             canvas.style.width = '100vw';
             canvas.style.height = '100vh';
             
-            // Reajustar resolución
-            const devicePixelRatio = window.devicePixelRatio || 1;
-            const rect = canvas.getBoundingClientRect();
-            
-            canvas.width = rect.width * devicePixelRatio;
-            canvas.height = rect.height * devicePixelRatio;
-            
-            const ctx = canvas.getContext('2d');
-            ctx.scale(devicePixelRatio, devicePixelRatio);
+            // NO modificar canvas.width/height aquí - solo estilos CSS
+            // Esto puede causar problemas con el renderizado del juego
         }
     },
     
@@ -931,30 +936,27 @@ const MobileControls = {
     optimizeForMobile: function() {
         if (!this.state.isMobile) return;
         
-        // Reducir calidad de efectos en móvil
-        if (window.OceanEffects) {
-            window.OceanEffects.setQuality('low');
+        // Reducir calidad de efectos en móvil (solo si está disponible)
+        try {
+            if (window.OceanEffects && window.OceanEffects.setQuality) {
+                window.OceanEffects.setQuality('low');
+            }
+        } catch (e) {
+            console.log('OceanEffects no disponible para optimización');
         }
         
-        // Ajustar canvas para móvil
+        // Ajustar canvas para móvil de forma segura
         const canvas = document.getElementById('gameCanvas');
         if (canvas) {
-            // Forzar tamaño completo en móvil
+            // Solo ajustar estilos CSS, no modificar propiedades del canvas
             canvas.style.width = '100vw';
             canvas.style.height = '100vh';
             canvas.style.maxWidth = '100vw';
             canvas.style.maxHeight = '100vh';
             canvas.style.objectFit = 'cover';
             
-            // Ajustar resolución del canvas para mejor rendimiento
-            const devicePixelRatio = window.devicePixelRatio || 1;
-            const rect = canvas.getBoundingClientRect();
-            
-            canvas.width = rect.width * devicePixelRatio;
-            canvas.height = rect.height * devicePixelRatio;
-            
-            const ctx = canvas.getContext('2d');
-            ctx.scale(devicePixelRatio, devicePixelRatio);
+            // NO modificar canvas.width/height aquí - puede causar problemas
+            // Solo ajustar estilos visuales
         }
         
         // Ajustar paneles para móvil

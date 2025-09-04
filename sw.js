@@ -9,7 +9,7 @@ const STATIC_FILES = [
     '/index.html',
     '/game.js',
     '/manifest.json',
-    '/assets/mobile-controls.js',
+    '/assets/mobile-controls-simple.js',
     '/assets/video-rewards-system.js',
     '/assets/boost-integration.js',
     '/assets/mission-system.js',
