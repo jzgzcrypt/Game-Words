@@ -41,6 +41,7 @@ npx serve .
 - **Panel de Gráficos**: Presiona `G` para ajustar calidad visual y rendimiento
 - **Panel de Misiones**: Presiona `Q` para gestionar misiones y objetivos
 - **Panel de Base**: Presiona `V` para construir y gestionar tu base submarina
+- **Panel de Videos**: Presiona `Ctrl + R` para videos recompensados
 
 ## 🚀 Características
 
@@ -55,6 +56,7 @@ npx serve .
 - 🌟 **Efectos visuales profesionales** (sombras, iluminación, partículas)
 - 🎯 **Sistema de Misiones Completo** con misiones principales, secundarias y diarias
 - 🏗️ **Base Construible Submarina** con módulos personalizables y gestión de recursos
+- 🎬 **Sistema de Videos Recompensados** para ingresos extra y beneficios especiales
 
 ## 🛠️ Tecnologías Utilizadas
 

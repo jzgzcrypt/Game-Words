@@ -97,6 +97,16 @@ const basePanelScript = document.createElement('script');
 basePanelScript.src = 'assets/base-panel.js';
 document.head.appendChild(basePanelScript);
 
+// Incluir sistema de videos y recompensas
+const videoRewardsScript = document.createElement('script');
+videoRewardsScript.src = 'assets/video-rewards-system.js';
+document.head.appendChild(videoRewardsScript);
+
+// Incluir sistema de integración de boosts
+const boostIntegrationScript = document.createElement('script');
+boostIntegrationScript.src = 'assets/boost-integration.js';
+document.head.appendChild(boostIntegrationScript);
+
 // Variables del juego
 let gameState = {
     player: null,
@@ -1915,6 +1925,13 @@ document.addEventListener('keydown', (e) => {
             window.BasePanel.toggle();
         }
     }
+    
+    // Ctrl+R para abrir panel de videos y recompensas
+    if (e.key.toLowerCase() === 'r' && e.ctrlKey) {
+        if (window.VideoRewardsSystem) {
+            window.VideoRewardsSystem.showRewardsPanel();
+        }
+    }
 });
 
 document.addEventListener('keyup', (e) => {
@@ -2218,6 +2235,18 @@ function init() {
     if (window.BasePanel) {
         window.BasePanel.init();
         console.log('Panel de base construible inicializado');
+    }
+    
+    // Inicializar sistema de videos y recompensas
+    if (window.VideoRewardsSystem) {
+        window.VideoRewardsSystem.init();
+        console.log('Sistema de videos y recompensas inicializado');
+    }
+    
+    // Inicializar sistema de integración de boosts
+    if (window.BoostIntegration) {
+        window.BoostIntegration.init();
+        console.log('Sistema de integración de boosts inicializado');
     }
     
     // Inicializar efectos oceánicos
