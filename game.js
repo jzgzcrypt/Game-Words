@@ -2,25 +2,10 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Incluir el sistema de gráficos optimizado
-const optimizedGraphicsScript = document.createElement('script');
-optimizedGraphicsScript.src = 'assets/optimized-graphics.js';
-document.head.appendChild(optimizedGraphicsScript);
-
-// Incluir el sistema de sprites optimizado
-const optimizedSpritesScript = document.createElement('script');
-optimizedSpritesScript.src = 'assets/optimized-sprites.js';
-document.head.appendChild(optimizedSpritesScript);
-
-// Incluir configuración de gráficos
-const graphicsConfigScript = document.createElement('script');
-graphicsConfigScript.src = 'assets/graphics-config.js';
-document.head.appendChild(graphicsConfigScript);
-
-// Incluir panel de configuración de gráficos
-const graphicsPanelScript = document.createElement('script');
-graphicsPanelScript.src = 'assets/graphics-panel.js';
-document.head.appendChild(graphicsPanelScript);
+// Incluir el sistema de gráficos simplificado y confiable
+const simpleGraphicsScript = document.createElement('script');
+simpleGraphicsScript.src = 'assets/simple-graphics.js';
+document.head.appendChild(simpleGraphicsScript);
 
 // Incluir el script de sprites
 const script = document.createElement('script');
@@ -2028,18 +2013,18 @@ function update() {
     spawnMerchantStations();
 }
 
-// Función de renderizado optimizada
+// Función de renderizado simplificada
 function render() {
-    // Usar sistema de gráficos optimizado si está disponible
-    if (window.OptimizedGraphics) {
+    // Usar sistema de gráficos simplificado si está disponible
+    if (window.SimpleGraphics) {
         // Preparar estado del juego para el renderizado
         const renderState = {
             ...gameState,
             currentBiome: getCurrentBiome()
         };
         
-        // Renderizar con el sistema optimizado
-        window.OptimizedGraphics.render(renderState, gameState.camera);
+        // Renderizar con el sistema simplificado
+        window.SimpleGraphics.render(renderState, gameState.camera);
         return;
     }
     
@@ -2047,105 +2032,75 @@ function render() {
     renderFallback();
 }
 
-// Función de renderizado fallback (sistema original)
+// Función de renderizado fallback (sistema original simplificado)
 function renderFallback() {
-    // Obtener bioma actual
-    let currentBiome = { name: 'Aguas Poco Profundas', color: '#006994' };
-    let biomeName = 'shallows';
-    if (window.BiomeSystem && gameState.player) {
-        currentBiome = window.BiomeSystem.getCurrentBiome(gameState.player.x, gameState.player.y);
-        // Mapear nombre del bioma
-        if (currentBiome.name.includes('Arrecife')) biomeName = 'reef';
-        else if (currentBiome.name.includes('Kelp')) biomeName = 'kelp';
-        else if (currentBiome.name.includes('Abisal')) biomeName = 'abyss';
-        else if (currentBiome.name.includes('Volcánica')) biomeName = 'volcanic';
-        else if (currentBiome.name.includes('Marianas')) biomeName = 'trench';
+    // Fondo simple y eficiente
+    ctx.fillStyle = '#006994';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Dibujar entidades básicas
+    if (gameState.merchantStations) {
+        gameState.merchantStations.forEach(station => {
+            if (station && station.draw) station.draw();
+        });
     }
     
-    // Dibujar fondo oceánico simplificado
-    if (window.OceanEffects) {
-        window.OceanEffects.drawOceanBackground(ctx, currentBiome, gameState.camera);
-    } else {
-        // Fallback simple
-        ctx.fillStyle = currentBiome.color || '#006994';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (gameState.gems) {
+        gameState.gems.forEach(gem => {
+            if (gem && gem.draw) gem.draw();
+        });
     }
     
-    // Dibujar elementos específicos del bioma
-    if (window.BiomeElements) {
-        // Cambiar bioma si es necesario
-        if (!window.BiomeElements.currentBiome || 
-            window.BiomeElements.currentBiome.name !== currentBiome.name) {
-            window.BiomeElements.changeBiome(biomeName);
-        }
-        // Dibujar elementos
-        window.BiomeElements.drawBiomeElements(ctx, gameState.camera, Date.now() * 0.001);
+    if (gameState.enemies) {
+        gameState.enemies.forEach(enemy => {
+            if (enemy && enemy.draw) enemy.draw();
+        });
     }
     
-    // Dibujar estaciones de comercio (detrás de todo)
-    gameState.merchantStations.forEach(station => station.draw());
-    
-    // Dibujar gemas
-    gameState.gems.forEach(gem => gem.draw());
-    
-    // Dibujar enemigos
-    gameState.enemies.forEach(enemy => enemy.draw());
-    
-    // Dibujar jefe si existe
-    if (window.BossSystem && window.BossSystem.currentBoss) {
-        window.BossSystem.drawBoss(ctx, gameState.camera);
+    if (gameState.projectiles) {
+        gameState.projectiles.forEach(projectile => {
+            if (projectile && projectile.draw) projectile.draw();
+        });
     }
     
-    // Dibujar mascotas
-    if (window.PetSystem && window.PetSystem.petInstances.length > 0) {
-        window.PetSystem.drawPets(ctx, gameState.camera);
+    if (gameState.particles) {
+        gameState.particles.forEach(particle => {
+            if (particle && particle.draw) particle.draw();
+        });
     }
     
-    // Dibujar proyectiles
-    gameState.projectiles.forEach(projectile => projectile.draw());
-    
-    // Dibujar partículas
-    gameState.particles.forEach(particle => particle.draw());
-    
-    // Dibujar efectos especiales
-    gameState.specialEffects.forEach(effect => {
-        if (effect.draw) effect.draw(ctx, gameState.camera);
-    });
-    
-    // Dibujar jugador con sistema de evolución visual
-    if (window.ShipEvolution) {
-        window.ShipEvolution.drawEvolvedShip(ctx, gameState.player);
-    } else {
+    // Dibujar jugador
+    if (gameState.player && gameState.player.draw) {
         gameState.player.draw();
     }
     
-    // UI - Indicadores en pantalla
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-    ctx.fillRect(10, canvas.height - 30, 200, 20);
-    
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.font = '12px Arial';
-    ctx.textAlign = 'left';
-    const depth = Math.floor(Math.sqrt(gameState.player.x * gameState.player.x + gameState.player.y * gameState.player.y) / 10);
-    ctx.fillText(`Profundidad: ${depth}m`, 15, canvas.height - 15);
-    
-    // Indicador de objetivo seleccionado
-    if (gameState.selectedTarget) {
-        ctx.fillText(`Objetivo: ${gameState.selectedTarget.name}`, 15, canvas.height - 35);
+    // UI básica
+    if (gameState.player) {
+        // Profundidad
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(10, canvas.height - 30, 200, 20);
+        
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'left';
+        const depth = Math.floor(Math.sqrt(gameState.player.x * gameState.player.x + gameState.player.y * gameState.player.y) / 10);
+        ctx.fillText(`Profundidad: ${depth}m`, 15, canvas.height - 15);
+        
+        // Objetivo seleccionado
+        if (gameState.selectedTarget) {
+            ctx.fillText(`Objetivo: ${gameState.selectedTarget.name}`, 15, canvas.height - 35);
+        }
     }
     
     // Controles
     ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
     ctx.font = '10px Arial';
     ctx.textAlign = 'right';
-    ctx.fillText('WASD: Mover | ESPACIO: Seleccionar objetivo | Click: Selección manual | 🐚 Busca mercaderes | ⚙️ G: Panel de Gráficos', canvas.width - 10, canvas.height - 10);
+    ctx.fillText('WASD: Mover | ESPACIO: Seleccionar objetivo | Click: Selección manual | 🐚 Busca mercaderes', canvas.width - 10, canvas.height - 10);
 }
 
 // Función auxiliar para obtener bioma actual
 function getCurrentBiome() {
-    if (window.BiomeSystem && gameState.player) {
-        return window.BiomeSystem.getCurrentBiome(gameState.player.x, gameState.player.y);
-    }
     return { name: 'Aguas Poco Profundas', color: '#006994' };
 }
 
@@ -2191,28 +2146,10 @@ function init() {
     // Inicializar burbujas
     initBubbles();
     
-    // Inicializar sistema de gráficos optimizado
-    if (window.OptimizedGraphics) {
-        window.OptimizedGraphics.init();
-        console.log('Sistema de gráficos optimizado inicializado');
-    }
-    
-    // Inicializar sistema de sprites optimizado
-    if (window.OptimizedSprites) {
-        window.OptimizedSprites.init();
-        console.log('Sistema de sprites optimizado inicializado');
-    }
-    
-    // Inicializar configuración de gráficos
-    if (window.GraphicsConfig) {
-        window.GraphicsConfig.init();
-        console.log('Configuración de gráficos inicializada');
-    }
-    
-    // Inicializar panel de configuración de gráficos
-    if (window.GraphicsPanel) {
-        window.GraphicsPanel.init();
-        console.log('Panel de configuración de gráficos inicializado');
+    // Inicializar sistema de gráficos simplificado
+    if (window.SimpleGraphics) {
+        window.SimpleGraphics.init();
+        console.log('Sistema de gráficos simplificado inicializado');
     }
     
     // Inicializar efectos oceánicos
