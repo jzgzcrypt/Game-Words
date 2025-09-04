@@ -77,6 +77,26 @@ const biomeElementsScript = document.createElement('script');
 biomeElementsScript.src = 'assets/biome-elements.js';
 document.head.appendChild(biomeElementsScript);
 
+// Incluir sistema de misiones
+const missionSystemScript = document.createElement('script');
+missionSystemScript.src = 'assets/mission-system.js';
+document.head.appendChild(missionSystemScript);
+
+// Incluir sistema de base construible
+const baseBuildingScript = document.createElement('script');
+baseBuildingScript.src = 'assets/base-building-system.js';
+document.head.appendChild(baseBuildingScript);
+
+// Incluir panel de misiones
+const missionPanelScript = document.createElement('script');
+missionPanelScript.src = 'assets/mission-panel.js';
+document.head.appendChild(missionPanelScript);
+
+// Incluir panel de base construible
+const basePanelScript = document.createElement('script');
+basePanelScript.src = 'assets/base-panel.js';
+document.head.appendChild(basePanelScript);
+
 // Variables del juego
 let gameState = {
     player: null,
@@ -1881,6 +1901,20 @@ document.addEventListener('keydown', (e) => {
             window.GraphicsPanel.toggle();
         }
     }
+    
+    // Q para abrir panel de misiones
+    if (e.key.toLowerCase() === 'q') {
+        if (window.MissionPanel) {
+            window.MissionPanel.toggle();
+        }
+    }
+    
+    // V para abrir panel de base construible
+    if (e.key.toLowerCase() === 'v') {
+        if (window.BasePanel) {
+            window.BasePanel.toggle();
+        }
+    }
 });
 
 document.addEventListener('keyup', (e) => {
@@ -2005,6 +2039,16 @@ function update() {
     
     // Actualizar estaciones de comercio
     gameState.merchantStations.forEach(station => station.update());
+    
+    // Verificar progreso de misiones
+    if (window.MissionSystem && gameState.player) {
+        // Verificar movimiento del jugador
+        window.MissionSystem.checkQuestProgress('move', { 
+            depth: Math.abs(gameState.player.y),
+            x: gameState.player.x,
+            y: gameState.player.y
+        });
+    }
     
     // Generar más enemigos y estaciones (menos si hay jefe)
     if (!window.BossSystem?.currentBoss) {
@@ -2150,6 +2194,30 @@ function init() {
     if (window.SimpleGraphics) {
         window.SimpleGraphics.init();
         console.log('Sistema de gráficos simplificado inicializado');
+    }
+    
+    // Inicializar sistema de misiones
+    if (window.MissionSystem) {
+        window.MissionSystem.init();
+        console.log('Sistema de misiones inicializado');
+    }
+    
+    // Inicializar sistema de base construible
+    if (window.BaseBuildingSystem) {
+        window.BaseBuildingSystem.init();
+        console.log('Sistema de base construible inicializado');
+    }
+    
+    // Inicializar panel de misiones
+    if (window.MissionPanel) {
+        window.MissionPanel.init();
+        console.log('Panel de misiones inicializado');
+    }
+    
+    // Inicializar panel de base construible
+    if (window.BasePanel) {
+        window.BasePanel.init();
+        console.log('Panel de base construible inicializado');
     }
     
     // Inicializar efectos oceánicos

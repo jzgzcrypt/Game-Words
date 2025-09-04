@@ -39,6 +39,8 @@ npx serve .
 - **Atacar**: Haz clic en un enemigo para seleccionarlo como objetivo
 - **Automático**: Tu nave atacará automáticamente a los enemigos seleccionados
 - **Panel de Gráficos**: Presiona `G` para ajustar calidad visual y rendimiento
+- **Panel de Misiones**: Presiona `Q` para gestionar misiones y objetivos
+- **Panel de Base**: Presiona `V` para construir y gestionar tu base submarina
 
 ## 🚀 Características
 
@@ -51,6 +53,8 @@ npx serve .
 - 🎨 **Sistema de gráficos AAA optimizado** con 4 niveles de calidad
 - 🚀 **Auto-optimización** según rendimiento del dispositivo
 - 🌟 **Efectos visuales profesionales** (sombras, iluminación, partículas)
+- 🎯 **Sistema de Misiones Completo** con misiones principales, secundarias y diarias
+- 🏗️ **Base Construible Submarina** con módulos personalizables y gestión de recursos
 
 ## 🛠️ Tecnologías Utilizadas
 
