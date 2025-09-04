@@ -38,6 +38,7 @@ npx serve .
 - **Movimiento**: Mueve el ratón para mover tu nave
 - **Atacar**: Haz clic en un enemigo para seleccionarlo como objetivo
 - **Automático**: Tu nave atacará automáticamente a los enemigos seleccionados
+- **Panel de Gráficos**: Presiona `G` para ajustar calidad visual y rendimiento
 
 ## 🚀 Características
 
@@ -47,6 +48,9 @@ npx serve .
 - 📈 4 tipos de mejoras al subir de nivel
 - 🌊 Estética marina espacial única
 - ⚔️ Combate automático con sistema de targeting
+- 🎨 **Sistema de gráficos AAA optimizado** con 4 niveles de calidad
+- 🚀 **Auto-optimización** según rendimiento del dispositivo
+- 🌟 **Efectos visuales profesionales** (sombras, iluminación, partículas)
 
 ## 🛠️ Tecnologías Utilizadas
 

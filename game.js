@@ -2,6 +2,26 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
+// Incluir el sistema de gráficos optimizado
+const optimizedGraphicsScript = document.createElement('script');
+optimizedGraphicsScript.src = 'assets/optimized-graphics.js';
+document.head.appendChild(optimizedGraphicsScript);
+
+// Incluir el sistema de sprites optimizado
+const optimizedSpritesScript = document.createElement('script');
+optimizedSpritesScript.src = 'assets/optimized-sprites.js';
+document.head.appendChild(optimizedSpritesScript);
+
+// Incluir configuración de gráficos
+const graphicsConfigScript = document.createElement('script');
+graphicsConfigScript.src = 'assets/graphics-config.js';
+document.head.appendChild(graphicsConfigScript);
+
+// Incluir panel de configuración de gráficos
+const graphicsPanelScript = document.createElement('script');
+graphicsPanelScript.src = 'assets/graphics-panel.js';
+document.head.appendChild(graphicsPanelScript);
+
 // Incluir el script de sprites
 const script = document.createElement('script');
 script.src = 'assets/sprites.js';
@@ -1869,6 +1889,13 @@ document.addEventListener('keydown', (e) => {
             window.MerchantSystem.closeShop();
         }
     }
+    
+    // G para abrir panel de gráficos
+    if (e.key.toLowerCase() === 'g') {
+        if (window.GraphicsPanel) {
+            window.GraphicsPanel.toggle();
+        }
+    }
 });
 
 document.addEventListener('keyup', (e) => {
@@ -2001,8 +2028,27 @@ function update() {
     spawnMerchantStations();
 }
 
-// Función de renderizado
+// Función de renderizado optimizada
 function render() {
+    // Usar sistema de gráficos optimizado si está disponible
+    if (window.OptimizedGraphics) {
+        // Preparar estado del juego para el renderizado
+        const renderState = {
+            ...gameState,
+            currentBiome: getCurrentBiome()
+        };
+        
+        // Renderizar con el sistema optimizado
+        window.OptimizedGraphics.render(renderState, gameState.camera);
+        return;
+    }
+    
+    // Fallback al sistema original si no está disponible
+    renderFallback();
+}
+
+// Función de renderizado fallback (sistema original)
+function renderFallback() {
     // Obtener bioma actual
     let currentBiome = { name: 'Aguas Poco Profundas', color: '#006994' };
     let biomeName = 'shallows';
@@ -2092,7 +2138,15 @@ function render() {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
     ctx.font = '10px Arial';
     ctx.textAlign = 'right';
-    ctx.fillText('WASD: Mover | ESPACIO: Seleccionar objetivo | Click: Selección manual | 🐚 Busca mercaderes', canvas.width - 10, canvas.height - 10);
+    ctx.fillText('WASD: Mover | ESPACIO: Seleccionar objetivo | Click: Selección manual | 🐚 Busca mercaderes | ⚙️ G: Panel de Gráficos', canvas.width - 10, canvas.height - 10);
+}
+
+// Función auxiliar para obtener bioma actual
+function getCurrentBiome() {
+    if (window.BiomeSystem && gameState.player) {
+        return window.BiomeSystem.getCurrentBiome(gameState.player.x, gameState.player.y);
+    }
+    return { name: 'Aguas Poco Profundas', color: '#006994' };
 }
 
 // Bucle principal del juego
@@ -2136,6 +2190,30 @@ function init() {
     
     // Inicializar burbujas
     initBubbles();
+    
+    // Inicializar sistema de gráficos optimizado
+    if (window.OptimizedGraphics) {
+        window.OptimizedGraphics.init();
+        console.log('Sistema de gráficos optimizado inicializado');
+    }
+    
+    // Inicializar sistema de sprites optimizado
+    if (window.OptimizedSprites) {
+        window.OptimizedSprites.init();
+        console.log('Sistema de sprites optimizado inicializado');
+    }
+    
+    // Inicializar configuración de gráficos
+    if (window.GraphicsConfig) {
+        window.GraphicsConfig.init();
+        console.log('Configuración de gráficos inicializada');
+    }
+    
+    // Inicializar panel de configuración de gráficos
+    if (window.GraphicsPanel) {
+        window.GraphicsPanel.init();
+        console.log('Panel de configuración de gráficos inicializado');
+    }
     
     // Inicializar efectos oceánicos
     if (window.OceanEffects) {
