@@ -107,6 +107,11 @@ const boostIntegrationScript = document.createElement('script');
 boostIntegrationScript.src = 'assets/boost-integration.js';
 document.head.appendChild(boostIntegrationScript);
 
+// Incluir sistema de controles móviles
+const mobileControlsScript = document.createElement('script');
+mobileControlsScript.src = 'assets/mobile-controls.js';
+document.head.appendChild(mobileControlsScript);
+
 // Variables del juego
 let gameState = {
     player: null,
@@ -2245,6 +2250,12 @@ function init() {
     if (window.BoostIntegration) {
         window.BoostIntegration.init();
         console.log('Sistema de integración de boosts inicializado');
+    }
+    
+    // Inicializar sistema de controles móviles
+    if (window.MobileControls) {
+        window.MobileControls.init();
+        console.log('Sistema de controles móviles inicializado');
     }
     
     // Inicializar efectos oceánicos

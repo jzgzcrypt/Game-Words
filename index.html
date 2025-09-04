@@ -2,8 +2,30 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ocean Depths - Aventura Submarina 2D</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#00CED1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Cosmic Depths">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="description" content="Un emocionante juego espacial 2D con estética marina donde controlas una nave y luchas contra enemigos de diferentes niveles">
+    <meta name="keywords" content="juego, espacial, submarino, 2D, aventura, móvil, PWA">
+    <meta name="author" content="Cosmic Depths Team">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="assets/icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="assets/icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/icon-180x180.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="assets/icons/icon-167x167.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/icon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/icon-16x16.png">
+    
+    <title>Cosmic Depths - Aventura Submarina 2D</title>
     <style>
         body {
             margin: 0;
@@ -22,6 +44,91 @@
             border-radius: 10px;
             box-shadow: 0 0 30px rgba(0, 206, 209, 0.6);
             position: relative;
+        }
+        
+        /* Estilos para dispositivos móviles */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+                background: linear-gradient(180deg, #006994, #0099CC);
+            }
+            
+            #gameContainer {
+                border: 2px solid #00CED1;
+                border-radius: 8px;
+                box-shadow: 0 0 20px rgba(0, 206, 209, 0.4);
+                max-width: 100vw;
+                max-height: 100vh;
+            }
+            
+            #gameCanvas {
+                max-width: 100%;
+                max-height: 100%;
+                width: auto !important;
+                height: auto !important;
+            }
+            
+            .upgrade-panel {
+                width: 90%;
+                max-width: 400px;
+                padding: 15px;
+            }
+            
+            .upgrade-button {
+                width: 100%;
+                margin: 8px 0;
+                padding: 12px;
+                font-size: 14px;
+            }
+            
+            .merchant-panel {
+                width: 95%;
+                min-width: auto;
+                max-width: 90vw;
+                padding: 15px;
+            }
+        }
+        
+        /* Modo retrato en móvil */
+        @media (max-width: 768px) and (orientation: portrait) {
+            #gameContainer {
+                transform: rotate(90deg);
+                transform-origin: center center;
+                width: 100vh;
+                height: 100vw;
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                margin-top: -50vw;
+                margin-left: -50vh;
+            }
+        }
+        
+        /* Clases para dispositivos móviles */
+        .mobile-device .upgrade-panel {
+            font-size: 16px;
+        }
+        
+        .mobile-device .merchant-panel {
+            font-size: 16px;
+        }
+        
+        .mobile-device button {
+            min-height: 44px; /* Tamaño mínimo para touch */
+        }
+        
+        /* Ocultar elementos en móvil si es necesario */
+        .mobile-device .desktop-only {
+            display: none !important;
+        }
+        
+        /* Mostrar elementos solo en móvil */
+        .mobile-only {
+            display: none;
+        }
+        
+        .mobile-device .mobile-only {
+            display: block;
         }
         
         #gameCanvas {
@@ -378,5 +485,93 @@
     </div>
     
     <script src="game.js"></script>
+    
+    <!-- Script para registrar Service Worker -->
+    <script>
+        // Registrar Service Worker para PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('Service Worker registrado:', registration);
+                        
+                        // Verificar actualizaciones
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // Nueva versión disponible
+                                    if (confirm('¡Nueva versión disponible! ¿Quieres actualizar?')) {
+                                        newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                        location.reload();
+                                    }
+                                }
+                            });
+                        });
+                    })
+                    .catch((error) => {
+                        console.error('Error al registrar Service Worker:', error);
+                    });
+            });
+        }
+        
+        // Detectar si es PWA instalada
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            window.deferredPrompt = e;
+            
+            // Mostrar botón de instalación si es necesario
+            showInstallButton();
+        });
+        
+        // Mostrar botón de instalación
+        function showInstallButton() {
+            const installButton = document.createElement('button');
+            installButton.id = 'installButton';
+            installButton.innerHTML = '📱 Instalar App';
+            installButton.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                background: linear-gradient(45deg, #00CED1, #00FA9A);
+                color: white;
+                border: none;
+                border-radius: 25px;
+                font-weight: bold;
+                cursor: pointer;
+                z-index: 1000;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+                display: none;
+            `;
+            
+            installButton.addEventListener('click', () => {
+                if (window.deferredPrompt) {
+                    window.deferredPrompt.prompt();
+                    window.deferredPrompt.userChoice.then((choiceResult) => {
+                        if (choiceResult.outcome === 'accepted') {
+                            console.log('Usuario aceptó instalar la app');
+                        }
+                        window.deferredPrompt = null;
+                        installButton.remove();
+                    });
+                }
+            });
+            
+            document.body.appendChild(installButton);
+            
+            // Mostrar después de un delay
+            setTimeout(() => {
+                installButton.style.display = 'block';
+            }, 3000);
+        }
+        
+        // Detectar si la app está instalada
+        if (window.matchMedia('(display-mode: standalone)').matches || 
+            window.navigator.standalone === true) {
+            document.body.classList.add('pwa-installed');
+            console.log('App instalada como PWA');
+        }
+    </script>
 </body>
 </html>

@@ -12,7 +12,14 @@ Un emocionante juego espacial 2D con estética marina donde controlas una nave y
 5. Guarda y espera unos minutos
 6. Tu juego estará disponible en: `https://tu-usuario.github.io/nombre-repositorio`
 
-### 💻 **Opción 2: Descarga y Ejecución Local**
+### 📱 **Opción 2: Instalar como App Móvil (PWA)**
+1. Abre el juego en tu navegador móvil
+2. Aparecerá banner "Añadir a pantalla de inicio"
+3. Toca "Añadir" para instalar
+4. La app aparecerá en tu menú de aplicaciones
+5. Disfruta de funcionalidad offline y controles táctiles
+
+### 💻 **Opción 3: Descarga y Ejecución Local**
 ```bash
 # Clonar el repositorio
 git clone https://github.com/tu-usuario/tu-repositorio.git
@@ -22,7 +29,7 @@ cd tu-repositorio
 # Simplemente abre index.html en tu navegador
 ```
 
-### 🔧 **Opción 3: Servidor Local (Para Desarrollo)**
+### 🔧 **Opción 4: Servidor Local (Para Desarrollo)**
 ```bash
 # Con Python (si lo tienes instalado)
 python -m http.server 8000
@@ -42,6 +49,7 @@ npx serve .
 - **Panel de Misiones**: Presiona `Q` para gestionar misiones y objetivos
 - **Panel de Base**: Presiona `V` para construir y gestionar tu base submarina
 - **Panel de Videos**: Presiona `Ctrl + R` para videos recompensados
+- **Controles Móviles**: Joystick virtual y botones táctiles automáticos
 
 ## 🚀 Características
 
@@ -57,6 +65,7 @@ npx serve .
 - 🎯 **Sistema de Misiones Completo** con misiones principales, secundarias y diarias
 - 🏗️ **Base Construible Submarina** con módulos personalizables y gestión de recursos
 - 🎬 **Sistema de Videos Recompensados** para ingresos extra y beneficios especiales
+- 📱 **Acceso Móvil Completo** con PWA instalable y controles táctiles
 
 ## 🛠️ Tecnologías Utilizadas
 

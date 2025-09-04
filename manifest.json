@@ -1,0 +1,144 @@
+{
+  "name": "Cosmic Depths - Aventura Submarina",
+  "short_name": "Cosmic Depths",
+  "description": "Un emocionante juego espacial 2D con estética marina donde controlas una nave y luchas contra enemigos de diferentes niveles",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#006994",
+  "theme_color": "#00CED1",
+  "orientation": "landscape",
+  "scope": "/",
+  "lang": "es",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    {
+      "src": "assets/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "assets/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "assets/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "assets/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "assets/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "assets/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "assets/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "assets/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Jugar",
+      "short_name": "Jugar",
+      "description": "Iniciar nueva partida",
+      "url": "/?action=play",
+      "icons": [
+        {
+          "src": "assets/icons/play-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Misiones",
+      "short_name": "Misiones",
+      "description": "Ver misiones disponibles",
+      "url": "/?action=missions",
+      "icons": [
+        {
+          "src": "assets/icons/missions-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Base",
+      "short_name": "Base",
+      "description": "Gestionar base submarina",
+      "url": "/?action=base",
+      "icons": [
+        {
+          "src": "assets/icons/base-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Videos",
+      "short_name": "Videos",
+      "description": "Ver videos recompensados",
+      "url": "/?action=videos",
+      "icons": [
+        {
+          "src": "assets/icons/videos-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "assets/screenshots/mobile-gameplay-1.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Gameplay en modo paisaje"
+    },
+    {
+      "src": "assets/screenshots/mobile-gameplay-2.png",
+      "sizes": "720x1280",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Gameplay en modo retrato"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "handle_links": "preferred",
+  "protocol_handlers": [
+    {
+      "protocol": "web+cosmicdepths",
+      "url": "/?action=%s"
+    }
+  ]
+}
