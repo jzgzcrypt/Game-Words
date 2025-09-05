@@ -4,7 +4,10 @@ const MobileControlsSimple = {
     state: {
         isMobile: false,
         isPortrait: false,
-        initialized: false
+        initialized: false,
+        joystickActive: false,
+        joystickX: 0,
+        joystickY: 0
     },
     
     // Configuración
@@ -12,8 +15,9 @@ const MobileControlsSimple = {
         joystickSize: 120,
         buttonSize: 60,
         buttonSpacing: 20,
-        touchSensitivity: 1.0,
-        enableHapticFeedback: true
+        touchSensitivity: 2.0, // Aumentar sensibilidad
+        enableHapticFeedback: true,
+        movementSpeed: 5.0 // Velocidad de movimiento
     },
     
     // Inicialización
@@ -163,6 +167,7 @@ const MobileControlsSimple = {
         // Funciones del joystick
         this.handleJoystickStart = (e, base, stick) => {
             isDragging = true;
+            this.state.joystickActive = true;
             baseRect = base.getBoundingClientRect();
             startX = e.clientX - baseRect.left;
             startY = e.clientY - baseRect.top;
@@ -182,21 +187,37 @@ const MobileControlsSimple = {
             const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
             const maxDistance = this.config.joystickSize / 2 - 20;
             
+            // Normalizar valores para enviar al juego
+            let normalizedX = 0;
+            let normalizedY = 0;
+            
             if (distance > maxDistance) {
                 const angle = Math.atan2(deltaY, deltaX);
                 const limitedX = Math.cos(angle) * maxDistance;
                 const limitedY = Math.sin(angle) * maxDistance;
                 
                 stick.style.transform = `translate(calc(-50% + ${limitedX}px), calc(-50% + ${limitedY}px))`;
-                this.sendJoystickInput(limitedX / maxDistance, limitedY / maxDistance);
+                normalizedX = limitedX / maxDistance;
+                normalizedY = limitedY / maxDistance;
             } else {
                 stick.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
-                this.sendJoystickInput(deltaX / maxDistance, deltaY / maxDistance);
+                normalizedX = deltaX / maxDistance;
+                normalizedY = deltaY / maxDistance;
             }
+            
+            // Guardar estado del joystick
+            this.state.joystickX = normalizedX;
+            this.state.joystickY = normalizedY;
+            
+            // Enviar input continuo al juego
+            this.sendJoystickInput(normalizedX, normalizedY);
         };
         
         this.handleJoystickEnd = (stick) => {
             stick.style.transform = 'translate(-50%, -50%)';
+            this.state.joystickActive = false;
+            this.state.joystickX = 0;
+            this.state.joystickY = 0;
             this.sendJoystickInput(0, 0);
             
             if (this.config.enableHapticFeedback) {
@@ -209,15 +230,44 @@ const MobileControlsSimple = {
     sendJoystickInput: function(x, y) {
         if (!gameState || !gameState.player) return;
         
-        // Aplicar sensibilidad
+        // Aplicar sensibilidad y velocidad
         const sensitivity = this.config.touchSensitivity;
-        const moveX = x * sensitivity;
-        const moveY = y * sensitivity;
+        const speed = this.config.movementSpeed;
+        
+        // Calcular movimiento
+        const moveX = x * sensitivity * speed;
+        const moveY = y * sensitivity * speed;
+        
+        // Mover el jugador directamente
+        if (gameState.player) {
+            // Calcular nueva posición
+            const newX = gameState.player.x + moveX;
+            const newY = gameState.player.y + moveY;
+            
+            // Limitar a los bordes del canvas
+            const canvas = document.getElementById('gameCanvas');
+            if (canvas) {
+                gameState.player.x = Math.max(0, Math.min(canvas.width, newX));
+                gameState.player.y = Math.max(0, Math.min(canvas.height, newY));
+            } else {
+                gameState.player.x = newX;
+                gameState.player.y = newY;
+            }
+        }
         
         // Actualizar posición del mouse para compatibilidad
         if (gameState.mouse) {
-            gameState.mouse.x += moveX * 5;
-            gameState.mouse.y += moveY * 5;
+            gameState.mouse.x = gameState.player.x;
+            gameState.mouse.y = gameState.player.y;
+        }
+        
+        // También actualizar las teclas para compatibilidad con el sistema de movimiento
+        if (gameState.keys) {
+            // Simular teclas de movimiento
+            gameState.keys['ArrowLeft'] = x < -0.1;
+            gameState.keys['ArrowRight'] = x > 0.1;
+            gameState.keys['ArrowUp'] = y < -0.1;
+            gameState.keys['ArrowDown'] = y > 0.1;
         }
     },
     
@@ -473,6 +523,16 @@ const MobileControlsSimple = {
             isPortrait: this.state.isPortrait,
             initialized: this.state.initialized
         };
+    },
+    
+    // Actualizar controles móviles (llamar desde gameLoop)
+    update: function() {
+        if (!this.state.isMobile || !this.state.initialized) return;
+        
+        // Si el joystick está activo, continuar enviando input
+        if (this.state.joystickActive) {
+            this.sendJoystickInput(this.state.joystickX, this.state.joystickY);
+        }
     },
     
     // Limpiar recursos
