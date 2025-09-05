@@ -247,12 +247,16 @@ const MobileControlsSimple = {
             // Limitar a los bordes del canvas
             const canvas = document.getElementById('gameCanvas');
             if (canvas) {
-                gameState.player.x = Math.max(0, Math.min(canvas.width, newX));
-                gameState.player.y = Math.max(0, Math.min(canvas.height, newY));
+                gameState.player.x = Math.max(15, Math.min(canvas.width - 15, newX));
+                gameState.player.y = Math.max(15, Math.min(canvas.height - 15, newY));
             } else {
                 gameState.player.x = newX;
                 gameState.player.y = newY;
             }
+            
+            // Actualizar velocidad para efectos visuales
+            gameState.player.vx = moveX;
+            gameState.player.vy = moveY;
         }
         
         // Actualizar posición del mouse para compatibilidad

@@ -112,10 +112,10 @@ const mobileControlsScript = document.createElement('script');
 mobileControlsScript.src = 'assets/mobile-controls-simple.js';
 document.head.appendChild(mobileControlsScript);
 
-// Incluir sistema de gráficos optimizado
-const optimizedGraphicsScript = document.createElement('script');
-optimizedGraphicsScript.src = 'assets/optimized-graphics-system.js';
-document.head.appendChild(optimizedGraphicsScript);
+// Incluir sistema de gráficos robusto
+const robustGraphicsScript = document.createElement('script');
+robustGraphicsScript.src = 'assets/robust-graphics.js';
+document.head.appendChild(robustGraphicsScript);
 
 // Variables del juego
 let gameState = {
@@ -2087,28 +2087,11 @@ function update() {
     spawnMerchantStations();
 }
 
-// Función de renderizado optimizada
+// Función de renderizado robusta
 function render() {
-    // Usar sistema de gráficos optimizado si está disponible
-    if (window.OptimizedGraphicsSystem) {
-        // Preparar estado del juego para el renderizado
-        const renderState = {
-            ...gameState,
-            currentBiome: getCurrentBiome()
-        };
-        
-        // Renderizar con el sistema optimizado
-        window.OptimizedGraphicsSystem.render(renderState, gameState.camera);
-        return;
-    }
-    
-    // Fallback al sistema simplificado si está disponible
-    if (window.SimpleGraphics) {
-        const renderState = {
-            ...gameState,
-            currentBiome: getCurrentBiome()
-        };
-        window.SimpleGraphics.render(renderState, gameState.camera);
+    // Usar sistema de gráficos robusto si está disponible
+    if (window.RobustGraphics && window.RobustGraphics.state.initialized) {
+        window.RobustGraphics.render(gameState, gameState.camera);
         return;
     }
     
@@ -2188,9 +2171,9 @@ function getCurrentBiome() {
     return { name: 'Aguas Poco Profundas', color: '#006994' };
 }
 
-// Bucle principal del juego optimizado
+// Bucle principal del juego simplificado
 function gameLoop() {
-    // Calcular FPS y delta time
+    // Calcular FPS
     const now = performance.now();
     const delta = now - gameState.fps.lastTime;
     gameState.fps.lastTime = now;
@@ -2201,41 +2184,11 @@ function gameLoop() {
         gameState.fps.current = gameState.fps.frames;
         gameState.fps.frames = 0;
         gameState.fps.lastFpsUpdate = now;
-        
-        // Auto-ajustar calidad de efectos según FPS
-        if (window.OceanEffects) {
-            window.OceanEffects.autoAdjustQuality(gameState.fps.current);
-        }
-        
-        // Auto-ajustar calidad del sistema de gráficos optimizado
-        if (window.OptimizedGraphicsSystem) {
-            const stats = window.OptimizedGraphicsSystem.getPerformanceStats();
-            if (stats.fps < 30) {
-                window.OptimizedGraphicsSystem.setQuality('low');
-            } else if (stats.fps < 45) {
-                window.OptimizedGraphicsSystem.setQuality('medium');
-            } else {
-                window.OptimizedGraphicsSystem.setQuality('high');
-            }
-        }
     }
     
-    // Frame skipping inteligente para mantener 60 FPS
-    const targetFrameTime = 1000 / 60; // 16.67ms para 60 FPS
-    if (delta >= targetFrameTime * 0.8) { // Solo actualizar si no estamos muy atrasados
-        update();
-        render();
-    } else {
-        // Solo renderizar si no podemos actualizar
-        render();
-    }
-    
-    // Mostrar FPS en pantalla (solo si hay problemas)
-    if (gameState.fps.current < 45) {
-        ctx.fillStyle = gameState.fps.current < 30 ? '#FF0000' : '#FFFF00';
-        ctx.font = '12px Arial';
-        ctx.fillText(`FPS: ${gameState.fps.current}`, 10, 20);
-    }
+    // Actualizar y renderizar
+    update();
+    render();
     
     requestAnimationFrame(gameLoop);
 }
@@ -2297,10 +2250,10 @@ function init() {
         console.log('Sistema de controles móviles simplificado inicializado');
     }
     
-    // Inicializar sistema de gráficos optimizado
-    if (window.OptimizedGraphicsSystem) {
-        window.OptimizedGraphicsSystem.init();
-        console.log('Sistema de gráficos optimizado inicializado');
+    // Inicializar sistema de gráficos robusto
+    if (window.RobustGraphics) {
+        window.RobustGraphics.init();
+        console.log('Sistema de gráficos robusto inicializado');
     }
     
     // Inicializar efectos oceánicos
