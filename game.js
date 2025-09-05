@@ -112,6 +112,11 @@ const mobileControlsScript = document.createElement('script');
 mobileControlsScript.src = 'assets/mobile-controls-simple.js';
 document.head.appendChild(mobileControlsScript);
 
+// Incluir sistema de gráficos optimizado
+const optimizedGraphicsScript = document.createElement('script');
+optimizedGraphicsScript.src = 'assets/optimized-graphics-system.js';
+document.head.appendChild(optimizedGraphicsScript);
+
 // Variables del juego
 let gameState = {
     player: null,
@@ -2070,6 +2075,11 @@ function update() {
         });
     }
     
+    // Actualizar controles móviles
+    if (window.MobileControlsSimple) {
+        window.MobileControlsSimple.update();
+    }
+    
     // Generar más enemigos y estaciones (menos si hay jefe)
     if (!window.BossSystem?.currentBoss) {
         spawnEnemies();
@@ -2077,17 +2087,27 @@ function update() {
     spawnMerchantStations();
 }
 
-// Función de renderizado simplificada
+// Función de renderizado optimizada
 function render() {
-    // Usar sistema de gráficos simplificado si está disponible
-    if (window.SimpleGraphics) {
+    // Usar sistema de gráficos optimizado si está disponible
+    if (window.OptimizedGraphicsSystem) {
         // Preparar estado del juego para el renderizado
         const renderState = {
             ...gameState,
             currentBiome: getCurrentBiome()
         };
         
-        // Renderizar con el sistema simplificado
+        // Renderizar con el sistema optimizado
+        window.OptimizedGraphicsSystem.render(renderState, gameState.camera);
+        return;
+    }
+    
+    // Fallback al sistema simplificado si está disponible
+    if (window.SimpleGraphics) {
+        const renderState = {
+            ...gameState,
+            currentBiome: getCurrentBiome()
+        };
         window.SimpleGraphics.render(renderState, gameState.camera);
         return;
     }
@@ -2168,9 +2188,9 @@ function getCurrentBiome() {
     return { name: 'Aguas Poco Profundas', color: '#006994' };
 }
 
-// Bucle principal del juego
+// Bucle principal del juego optimizado
 function gameLoop() {
-    // Calcular FPS
+    // Calcular FPS y delta time
     const now = performance.now();
     const delta = now - gameState.fps.lastTime;
     gameState.fps.lastTime = now;
@@ -2186,12 +2206,31 @@ function gameLoop() {
         if (window.OceanEffects) {
             window.OceanEffects.autoAdjustQuality(gameState.fps.current);
         }
+        
+        // Auto-ajustar calidad del sistema de gráficos optimizado
+        if (window.OptimizedGraphicsSystem) {
+            const stats = window.OptimizedGraphicsSystem.getPerformanceStats();
+            if (stats.fps < 30) {
+                window.OptimizedGraphicsSystem.setQuality('low');
+            } else if (stats.fps < 45) {
+                window.OptimizedGraphicsSystem.setQuality('medium');
+            } else {
+                window.OptimizedGraphicsSystem.setQuality('high');
+            }
+        }
     }
     
-    update();
-    render();
+    // Frame skipping inteligente para mantener 60 FPS
+    const targetFrameTime = 1000 / 60; // 16.67ms para 60 FPS
+    if (delta >= targetFrameTime * 0.8) { // Solo actualizar si no estamos muy atrasados
+        update();
+        render();
+    } else {
+        // Solo renderizar si no podemos actualizar
+        render();
+    }
     
-    // Mostrar FPS en pantalla (opcional)
+    // Mostrar FPS en pantalla (solo si hay problemas)
     if (gameState.fps.current < 45) {
         ctx.fillStyle = gameState.fps.current < 30 ? '#FF0000' : '#FFFF00';
         ctx.font = '12px Arial';
@@ -2256,6 +2295,12 @@ function init() {
     if (window.MobileControlsSimple) {
         window.MobileControlsSimple.init();
         console.log('Sistema de controles móviles simplificado inicializado');
+    }
+    
+    // Inicializar sistema de gráficos optimizado
+    if (window.OptimizedGraphicsSystem) {
+        window.OptimizedGraphicsSystem.init();
+        console.log('Sistema de gráficos optimizado inicializado');
     }
     
     // Inicializar efectos oceánicos
